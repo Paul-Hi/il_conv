@@ -1,0 +1,14 @@
+__pycache__
+build
+dist
+il_conv.build
+il_conv.dist
+il_conv.onefile-build
+il_conv.cmd
+il_conv.spec
+id_conv.exe
+
+*.xlsx
+*.html
+*.bak
+
