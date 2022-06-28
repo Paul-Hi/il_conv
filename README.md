@@ -4,7 +4,17 @@
 
 A small tool to generate visually improved output from logs created by the Tasking inspector.
 
-Features:
+## Example usage:
+
+il_conv -?
+ ...
+
+il_conv --output-format=html log.txt
+
+il_conv -u <username> -p <secret> --output-format=xlsx log.txt log2.txt ...
+
+
+## Features:
 * [x] Relaxed parsing of log files created by the tasking inspector & compiler
 * [x] Generation of xlsx output from parsed data
 * [x] Command line input of files including options
@@ -17,8 +27,7 @@ Features:
 * [ ] Less hardcoding in table structure
 * [ ] Allow more nicer names for the portal issues
 
-Dependencies (install-dep.bat)
-
+## Dependencies (install-dep.bat)
 * Python 3.10
 * openpyxl (*pip install openpyxl*)
 * beautifulsoup4 (*pip install beautifulsoup4*)
@@ -32,18 +41,15 @@ In case you wanna build  the scripts into a onefile executable there are two  op
 Beware that nuitka builds depends on a bunch of addtional things to be installed in addtion (e.g. gcc compiler) on the build machine
 --> much easier is using the provided exe file from our release page
 
-Know bugs: Test-Coverage low - but as it is a simple script, hack it yourself or create a nice request (ticket) and we might have a look :-d
+## Know bugs: 
+Test-Coverage low - but as it is a simple script, hack it yourself or create a nice request (ticket) and we might have a look :-d
 
 Paul & Peter
 
-Note: This script is as is, no notion of completeness or that it works under all circumstances ...
+  
+## This script is as is, no notion of completeness or that it works under all circumstances ...
+  
+### I'll not get payed for this work, so please be polite.
+  
 
-
-Example usage:
->> il_conv -?
->> ...
-
->> il_conv --output-format=html log.txt
-
->> il_conv -u <username> -p <secret> --output-format=xlsx log.txt log2.txt ...
 
