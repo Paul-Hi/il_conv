@@ -37,3 +37,13 @@ Know bugs: Test-Coverage low - but as it is a simple script, hack it yourself or
 Paul & Peter
 
 Note: This script is as is, no notion of completeness or that it works under all circumstances ...
+
+
+Example usage:
+>> il_conv -?
+>> ...
+
+>> il_conv --output-format=html log.txt
+
+>> il_conv -u <username> -p <secret> --output-format=xlsx log.txt log2.txt ...
+
