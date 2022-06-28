@@ -1,0 +1,69 @@
+/* style for html */
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: white;
+}
+
+th {
+    background-color: #115FAB;
+    color: whitesmoke;
+    cursor: pointer;
+}
+
+tr:nth-child(even) {
+    background-color: lightgray;
+}
+
+table {
+    border-collapse: collapse;
+    overflow-x: auto;
+}
+
+th,
+td {
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+}
+
+td {
+    text-align: left;
+}
+
+tr:hover {
+    background-color: darkgray;
+}
+
+th>i {
+    font-size: 20px;
+    padding: 0 10px;
+}
+
+th>i.fa {
+    display: none;
+}
+
+th.desc>i.fa-caret-up {
+    display: inline-block;
+}
+
+th.asc>i.fa-caret-down {
+    display: inline-block;
+}
+
+.draggable.dragging {
+    background-color: #5686b6;
+}
+
+table.blur>tbody {
+    filter: blur(10px);
+    background-color: lightgray;
+    color: white;
+}
+
+table.blur>tbody>tr:nth-child(even) {
+    color: white;
+}
+
