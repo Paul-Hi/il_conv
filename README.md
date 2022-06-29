@@ -11,7 +11,7 @@ il_conv -?
 
 il_conv --output-format=html log.txt
 
-il_conv -u <username> -p <secret> --output-format=xlsx log.txt log2.txt ...
+il_conv -u login@companyname.com -p password --output-format=xlsx log.txt log2.txt ...
 
 
 ## Features:
