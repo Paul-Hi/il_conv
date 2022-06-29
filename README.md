@@ -2,7 +2,7 @@
   <img src="res/logo.png" width="20%">
 </p>
 
-A small tool to generate visually improved output from logs created by the Tasking inspector.
+A small tool to generate visually improved output from logs created by the TASKING Inspector.
 
 ## Example usage:
 
