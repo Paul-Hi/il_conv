@@ -6,9 +6,10 @@ il_conv.dist
 il_conv.onefile-build
 il_conv.cmd
 il_conv.spec
-id_conv.exe
+il_conv.exe
 
 *.xlsx
 *.html
 *.bak
+
 
