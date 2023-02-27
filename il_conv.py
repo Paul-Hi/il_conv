@@ -17,7 +17,7 @@ from resources import resource_path
 from parse import parse_file
 import os
 
-VERSION_STR = "0.95"
+VERSION_STR = "0.96"
 
 
 def parse_arguments() -> argparse.Namespace:
