@@ -17,7 +17,7 @@ from resources import resource_path
 from parse import parse_file
 import os
 
-VERSION_STR = "0.96"
+VERSION_STR = "0.99"
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -59,6 +59,9 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("-p", "--password", type=str, default="",
                         help="Pass your  password for your account on TASKING issue portal, default is ''")
 
+    parser.add_argument("-x", "--xmlfile", type=str, default="",
+                        help="Pass filename of issue portal xml export, default is ''")
+
     parser.add_argument(
         "--dump-defaultcfg", help="Dumps default configuration and exit immediately.", action='store_true')
 
@@ -92,7 +95,7 @@ def il_conv():
     if args.logfiles != None:
         for file in args.logfiles:
             print("... parsing file ", file, " ...")
-            table.extend(parse_file(file, configuration))
+            table.extend(parse_file(file, configuration, args.verbose))
 
     table.remove_duplicates()
     if args.verbose:
@@ -104,6 +107,8 @@ def il_conv():
         # try website
         db = issuedb.populateDBFromIssuePortal(
             args.user, args.password, args.toolset, args.verbose)
+    elif (args.xmlfile != ""):
+        db = issuedb.populatIssueDBFromXMLFile(args.xmlfile, args.verbose)
     else:
         portal_test_data = os.path.join(
             resource_path('testdata'), 'issue_portal_test_data.html')

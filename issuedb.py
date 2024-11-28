@@ -6,11 +6,93 @@ Copyright (C) 2022 Paul Himmler, Peter Himmler
 Apache License 2.0
 """
 
+import itertools
 import requests
 import ssl
 from bs4 import BeautifulSoup
 import issue_store as ist
 from issue_store import Issuestore, Portalissue
+
+
+def populatIssueDBFromXMLFile(file: str, verbose=False) -> Issuestore:
+    '''Populates the issue database with issues loaded from a file
+
+    Args:
+        file (str): The file to load the issues from
+        tc_version (str): The toolset/compiler toolchain version to lookup
+        verbose (bool): Create verbose output during processing
+
+    Returns:
+        Issuestore: Dictionary of entries
+    '''
+
+    input = ''
+
+    if file != None:
+        if verbose:
+            print("... fetching data from local testdata. " + file + '\n')
+        with open(file) as fp:
+            input = fp.read()
+
+    issuedict = Issuestore()
+
+    if verbose:
+        print("... populate issue portal database")
+    if (not input):
+        if verbose:
+            print("ERR: Got no input to populate issue portal database!")
+        return issuedict
+
+    soup = BeautifulSoup(input, 'xml')
+
+    all_issues = soup.find_all('issue')
+    issues_length = len(all_issues)
+
+    for index, issue in enumerate(all_issues):
+        id = [issue.find('id').get_text(strip=True)]
+        summary = [issue.find('summary').get_text(strip=True)]
+        # component = [issue.find('component').get_text(strip=True)]
+        component = [",".join([l.get_text(strip=True) for l in issue.find_all(
+            'component')])]
+
+        # affected_toolchain = issue.find('affected_toolchain').get_text(strip=True)
+        affected_toolchain = [l.get_text(strip=True) for l in issue.find_all(
+            'affected_toolchain')]
+        affected_toolchain = [",".join(affected_toolchain)]
+        if len(affected_toolchain) == 0:
+            affected_toolchain = ['n/a']
+
+        sil = [issue.find('sil').get_text(strip=True)]
+        published = [issue.find('published').get_text(strip=True)]
+        if len(published) == 0:
+            published = ['n/a']
+        updated = [issue.find('updated').get_text(strip=True)]
+        if len(updated) == 0:
+            updated = ['n/a']
+
+        description = [issue.find('description').get_text(strip=True)]
+
+        inspector = [l.get_text(strip=True) for l in issue.find_all(
+            'inspector')]
+        inspector = [",".join(inspector)]
+
+        if len(inspector) == 0:
+            inspector = ['n/a']
+
+        cols = list(itertools.chain(id, sil, summary, published,
+                    updated, component, affected_toolchain, inspector))
+
+        if verbose:
+            #print("COLS\n " + str(cols))
+            # TODO THIS CHECK BETTER as here we now have already correct data
+            if ist.HEADER_ENTRIES_NO != len(cols):
+                print("WARN:There might be a inconsistent rows within issue table row!")
+
+        entry = Portalissue(*cols)
+        # print(entry)
+        issuedict[entry.issue_id] = entry
+
+    return issuedict
 
 
 def populatIssueDBFromFile(file: str, tc_version: str, verbose=False) -> Issuestore:
@@ -208,7 +290,7 @@ def _populateDB(input: str, tc_version: str, verbose) -> Issuestore:
             cols += ['n/a']
 
         if verbose:
-            #print( "COLS\n " + str(cols) )
+            # print( "COLS\n " + str(cols) )
             # TODO THIS CHECK BETTER as here we now have already correct data
             if ist.HEADER_ENTRIES_NO != len(cols):
                 print("WARN:There might be a inconsistent rows within issue table row!")

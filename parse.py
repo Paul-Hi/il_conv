@@ -31,7 +31,7 @@ DIAG_MSG_KEY = configs.info['COLUMN_DIAG_MSG_NUMBER'][0]
 '''Key for dialogue messages'''
 
 
-def parse_file(file_name: str, configuration: configs.Config) -> tables.Table:
+def parse_file(file_name: str, configuration: configs.Config, verbose=False) -> tables.Table:
     '''Parses a file and returns a table with the rows
 
     Attributes:
@@ -102,7 +102,8 @@ def parse_file(file_name: str, configuration: configs.Config) -> tables.Table:
             insplogFlag = False
             continue
 
-            #print ("NO match in {0} line number {1} line !".format(file_name, line_nr) )
+        if verbose:
+            print ("NO match in {0} line number {1} line !".format(file_name, line_nr) )
             # NOTE: --detect-asm=<specific issue> requires to more detailed look into your self -> therefore ignored!".format(file_name, line_nr) )
             # from now on I skip the ASM special detector lines ...
 
