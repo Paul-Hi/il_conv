@@ -1,321 +1,420 @@
 """
 File:   issuedb.py 
-Desc:   Script function to parse Tasking Issue Portal
+Desc:   Script function to parse Tasking Issue Portal XML file and readme release note HTML file in a database
 
-Copyright (C) 2022 Paul Himmler, Peter Himmler
+Copyright (C) 2024 Peter Himmler
 Apache License 2.0
 """
 
-import itertools
-import requests
-import ssl
+
+import sys
+#assert sys.version_info.major == 3 and sys.version_info.minor in (10, 11), "ERROR: script works only with Python 3.10 or 3.11"
+import os
+
+
+from pathlib import Path
 from bs4 import BeautifulSoup
-import issue_store as ist
-from issue_store import Issuestore, Portalissue
+import sqlite3
+from collections import namedtuple
 
 
-def populatIssueDBFromXMLFile(file: str, verbose=False) -> Issuestore:
-    '''Populates the issue database with issues loaded from a file
+RELEASE_NOTE_RECORD = [
+                    'id',
+                    'sil',
+                    'summary',
+                    'inspcomp', 
+                    'asscmp',
+                    'detectiontype',
+                ]
+                
+ReleaseNoteIssue = namedtuple( "ReleaseNoteIssue", RELEASE_NOTE_RECORD, #['id', 'sil', 'summary', 'inspcomp', 'asscmp', 'detectiontype'] ,
+                                defaults = (    '',    '',       '',         '',       '',        '' ) )
+'''Data type to store release note information per issue'''
 
-    Args:
-        file (str): The file to load the issues from
-        tc_version (str): The toolset/compiler toolchain version to lookup
-        verbose (bool): Create verbose output during processing
+XML_EXPORT_RECORD = [
+                    'id',
+                    'sil',
+                    'mitigation',
+                    'affected_version', 
+                    'fix_version', 
+                    'summary',
+                    'description',
+                    'published',
+                    'last_updated',
+                    'component',
+                    'affected_toolchains',
+                    'issue_inspector',
+]
 
-    Returns:
-        Issuestore: Dictionary of entries
-    '''
+PortalIssue = namedtuple( "PortalIssue", XML_EXPORT_RECORD, 
+                         defaults = ( '', '', 'PLEASE LOOKUP issue in issue portal!', '', '', '', '', '1-1-1970', '1-1-1970', '', '', '??') )
+'''Data type to store portal issue / / XML export information per issue'''
 
-    input = ''
+ISSUE_RECORD = [
+                    'id',
+                    'sil',
+                    'mitigation',
+                    'affected_version', 
+                    'fix_version', 
+                    'summary',
+                    'description', 
+                    'published',
+                    'last_updated',
+                    'component',
+                    'affected_toolchains',
+                    'issue_inspector',
+                    'inspcomp', 
+                    'asscmp',
+                    'detectiontype',
+]
 
-    if file != None:
-        if verbose:
-            print("... fetching data from local testdata. " + file + '\n')
-        with open(file) as fp:
-            input = fp.read()
-
-    issuedict = Issuestore()
-
-    if verbose:
-        print("... populate issue portal database")
-    if (not input):
-        if verbose:
-            print("ERR: Got no input to populate issue portal database!")
-        return issuedict
-
-    soup = BeautifulSoup(input, 'xml')
-
-    all_issues = soup.find_all('issue')
-    issues_length = len(all_issues)
-
-    for index, issue in enumerate(all_issues):
-        id = [issue.find('id').get_text(strip=True)]
-        summary = [issue.find('summary').get_text(strip=True)]
-        # component = [issue.find('component').get_text(strip=True)]
-        component = [",".join([l.get_text(strip=True) for l in issue.find_all(
-            'component')])]
-
-        # affected_toolchain = issue.find('affected_toolchain').get_text(strip=True)
-        affected_toolchain = [l.get_text(strip=True) for l in issue.find_all(
-            'affected_toolchain')]
-        affected_toolchain = [",".join(affected_toolchain)]
-        if len(affected_toolchain) == 0:
-            affected_toolchain = ['n/a']
-
-        sil = [issue.find('sil').get_text(strip=True)]
-        published = [issue.find('published').get_text(strip=True)]
-        if len(published) == 0:
-            published = ['n/a']
-        updated = [issue.find('updated').get_text(strip=True)]
-        if len(updated) == 0:
-            updated = ['n/a']
-
-        description = [issue.find('description').get_text(strip=True)]
-
-        inspector = [l.get_text(strip=True) for l in issue.find_all(
-            'inspector')]
-        inspector = [",".join(inspector)]
-
-        if len(inspector) == 0:
-            inspector = ['n/a']
-
-        cols = list(itertools.chain(id, sil, summary, published,
-                    updated, component, affected_toolchain, inspector))
-
-        if verbose:
-            #print("COLS\n " + str(cols))
-            # TODO THIS CHECK BETTER as here we now have already correct data
-            if ist.HEADER_ENTRIES_NO != len(cols):
-                print("WARN:There might be a inconsistent rows within issue table row!")
-
-        entry = Portalissue(*cols)
-        # print(entry)
-        issuedict[entry.issue_id] = entry
-
-    return issuedict
+Issue = namedtuple( "Issue", ISSUE_RECORD, 
+                         defaults = ( '', '', 'PLEASE LOOKUP issue in issue portal!', '', '', '', '', '', '', '', '', '', '', '', '') )
 
 
-def populatIssueDBFromFile(file: str, tc_version: str, verbose=False) -> Issuestore:
-    '''Populates the issue database with issues loaded from a file
 
-    Args:
-        file (str): The file to load the issues from
-        tc_version (str): The toolset/compiler toolchain version to lookup
-        verbose (bool): Create verbose output during processing
-
-    Returns:
-        Issuestore: Dictionary of entries
-    '''
-
-    input = ''
-
-    if file != None:
-        if verbose:
-            print("... fetching data from local testdata. " + file + '\n')
-        with open(file) as fp:
-            input = fp.read()
-
-    return _populateDB(input, tc_version, verbose)
+class IssueDB(object):
+    '''The IssueDB hosting all information we know from issues.'''
 
 
-def populateDBFromIssuePortal(user: str, password: str, tc_version: str, verbose=False) -> Issuestore:
-    '''Populates the issue database with issues loaded the issue portal
+    def __init__(self, compiler_version : str, inspector_version : str,  xmlfile : Path, relnotefile: Path, verbose : False) :
+        
+        self.compiler_version = compiler_version
+        self.inspector_version = inspector_version
+        self.dbname = 'issues-{}-{}.db'.format(compiler_version, inspector_version)
+        self.xmlfile = xmlfile
+        self.relnotefile = relnotefile
+        self.verbose = verbose
+        self.conn = sqlite3.connect(self.dbname) # , autocommit = True)
+        self.cur = self.conn.cursor()
+        self._createTables()
+        
+    def __del__(self):
+        if self.conn:
+            self.conn.close()
+        
+    def _createTables(self): 
+        # create ReleaseNoteIssue table
+        defaultVal = ReleaseNoteIssue()._asdict()
+        
+        cols = ["{} TEXT DEFAULT '{}'".format(n,v) for n, v in defaultVal. items()]
+        cols[0] = "{} TEXT PRIMARY KEY".format(ReleaseNoteIssue._fields[0])
+        line  = ','.join(cols)
+        cols = line
+        self.cur.execute("DROP TABLE IF EXISTS ReleaseNoteIssues");
+        create = "CREATE TABLE IF NOT EXISTS ReleaseNoteIssues (" + cols + ")"                
+        self.cur.execute(create)
+        
+        # create PortalIssue table
+        defaultVal = PortalIssue()._asdict()
+        
+        cols = ["{} TEXT DEFAULT '{}'".format(n,v) for n, v in defaultVal. items()]
+        cols[0] = "{} TEXT PRIMARY KEY".format(ReleaseNoteIssue._fields[0])
+        line  = ','.join(cols)
+        cols = line
+        self.cur.execute("DROP TABLE IF EXISTS PortalIssues");
+        create = "CREATE TABLE IF NOT EXISTS PortalIssues (" + cols + ")"                
+        self.cur.execute(create)
+        self.conn.commit()
 
-    Args:
-        user (str): User email for login
-        password (str): User password for login
-        tc_version (str): The toolset/compiler toolchain version to lookup
-        verbose (bool): Create verbose output during processing
+    def _countOfRows( self, tablename : str) -> int:
+        sql =  "SELECT count(*) FROM " + tablename
+        num = self.cur.execute( sql ).fetchone()[0]
+        return num
+        
 
-    Returns:
-        Issuestore: Dictionary of entries
-    '''
+    def _addReleaseNoteIssue( self, row : ReleaseNoteIssue):
+        number_of_fields = len(ReleaseNoteIssue._fields)
+        sql = "INSERT INTO ReleaseNoteIssues (" + ",".join(ReleaseNoteIssue._fields) + " ) " 
+        sql += " VALUES ( " + ",".join(['?'] * number_of_fields) + " )"
+        'INSERT INTO ReleaseNoteIssues (id,sil,summary,inspcomp,asscmp,detectiontype)VALUES ( ?,?,?,?,?,?)'
+        self.cur.execute( sql, (row.id, row.sil, row.summary, row.inspcomp, row.asscmp, row.detectiontype ))
+        self.conn.commit()
+        
+        
+    def _addPortalIssue( self, row : PortalIssue):
+        number_of_fields = len(PortalIssue._fields)
+        sql = "INSERT INTO PortalIssues (" + ",".join(PortalIssue._fields) + " ) " 
+        sql += " VALUES ( " + ",".join(['?'] * number_of_fields) + " )"
+        'INSERT INTO PortalIssues (id,...) VALUES ( ?,...)'
+        self.cur.execute( sql, tuple(row) )
+        self.conn.commit()
+                
+        
+    def importReleaseNote(self) -> int:
+        """Import Inspector release note file into database table.
+            Does some dump cross checks with passed inspector compiler version ...
 
-    #
-    # Workaround SSL issues
-    # [SSL: WRONG_SIGNATURE_TYPE] wrong signature type error.
-    #
-    class TLSAdapter(requests.adapters.HTTPAdapter):
-        def init_poolmanager(self, *args, **kwargs):
-            ctx = ssl.create_default_context()
-            ctx.set_ciphers('DEFAULT@SECLEVEL=1')
-            kwargs['ssl_context'] = ctx
-            return super(TLSAdapter, self).init_poolmanager(*args, **kwargs)
+        Args:
+    
+        Returns:
+            int: return number of inserted release note issues / inspector detectors 
+        """
+    
+        input = ''
 
-    with requests.Session() as s:
-        s.mount('https://', TLSAdapter())
-        s.headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.141 Safari/537.36'
+        if self.relnotefile != None:
+            if self.verbose:
+                print("INFO: Read issue information from release note '" + str(self.relnotefile)+ "'")
+            with open(self.relnotefile) as fp:
+                input = fp.read()
 
-        print('FETCHING from ', ist.LOGIN_URL, '\n')
-        res = s.get(ist.LOGIN_URL)
+        if (not input):
+            if self.verbose:
+                print("ERROR: No input in passed release notes file!")
+            return 0
+        if self.verbose:
+            print("INFO: Import issue information")
+        
+    
+        soup = BeautifulSoup(input, 'html.parser')
+        title = soup.title.get_text( strip = True)
+        err =  "\nERROR: Release Notes / Readme file has wrong structure for 'TriCore {} Inspector {}' , saw title '{}' ".format(self.compiler_version, self.inspector_version, title)
+        assert title.find(self.compiler_version)>=0 , err
 
-        soup = BeautifulSoup(res.text, 'html.parser')
-        payload = {i['name']: i.get('value', '')
-                   for i in soup.select('input[name]')}
-        # what the above line does is parse the keys and values available in the login form
-        # print(payload)
+        #
+        # Parse out the table from html file.
+        # Note: This is a clear miss-use of the HTML file, but ....
+        # CHECK_ON_NEW_RELEASES
+        # 
+        htmltable = soup.body.find("table", attrs={"class": "detectors"})
+        trows = htmltable.find_all('tr')
 
-        payload['login_username'] = user
-        payload['secretkey'] = password
+        headerrow = [th.get_text(strip=True)
+                    for th in trows[0].find_all('th')]  # header row
+    
+        if len(headerrow) == 0:
+            headerrow = [th.get_text(strip=True) for th in trows[0].find_all(
+                "td", attrs={"class": "heading"})]  # header row
 
-        payload['just_logged_in'] = '1'
-        payload['issueid'] = ''
-        payload['project'] = ist.PROJECT
-        payload['version'] = tc_version
+        if len(headerrow) > 0:
+            trows = trows[1:]  # skip header row if any
 
-        # when you print this, you should see the required parameters within payload
-        # print(payload)
+        if self.verbose:
+            print("INFO: HTML header row(s) ignored when importing the inspector readme / release notes" )
 
-        r = s.post(ist.LOGIN_REDIRECT_URL, data=payload)
+        for row in trows:
+            td = row.find("td")
+            url = td.a['href']
+            id = td.get_text(strip=True)
 
-        input = r.text
-        # print (input)
+            td = td.find_next_sibling()
+            summary = td.get_text(strip=True)
 
-        # as we have already logged in, the login cookies are stored within the session
-        # in our subsequesnt requests we are reusing the same session we have been using from the very beginning
-        # r = s.get('https://issues.tasking.com/?project=TCVX&version=v6.3r1')
+            td = td.find_next_sibling()
+            sil = td.get_text(strip=True)
 
-    return _populateDB(input, tc_version, verbose)
+            td = td.find_next_sibling()
+            inspcomp = td.get_text(strip=True)
+
+            td = td.find_next_sibling()
+            asscmp = td.get_text(strip=True)
+            if len(asscmp) > 0:
+                asscmp = 'Yes'
+            else:
+                asscmp = 'No'
+            
+            td = td.find_next_sibling()
+            detectiontype = td.get_text(strip=True)
 
 
-def _populateDB(input: str, tc_version: str, verbose) -> Issuestore:
-    '''Populates the issue database with issues loaded from HTML input
+            newrow = [id, sil, summary, inspcomp, asscmp, detectiontype]
 
-    Args:
-        input (str): HTML input to load issues from
-        tc_version (str): The toolset/compiler toolchain version to lookup
-        verbose (bool): Create verbose output during processing
+            # unpack list into ReleaseNoteIssue
+            entry = ReleaseNoteIssue(*newrow)
+            
+            self._addReleaseNoteIssue( entry )
+        
+        return self._countOfRows("ReleaseNoteIssues")
 
-    Returns:
-        Issuestore: Dictionary of entries
-    '''
+    def importXMLFile( self ) -> int:
+        """Import TASKING issue portal compiler XML-export files into database table.
+            Does some dump cross checks with passed inspector compiler version ...
 
-    issuedict = Issuestore()
+        Args:
+        
+        Returns:
+            int: return number of inserted XML export portal issue information.
+            
+        Note: XML export from portal includes no 'closed' ticket information = won't fix or dublicated   
+        """
+        
+        input = ''
 
-    if verbose:
-        print("... populate issue portal database")
-    if (not input):
-        if verbose:
-            print("ERR: Got no input to  populate issue portal database!")
-        return issuedict
+        if self.xmlfile != None:
+            if self.verbose:
+                print("INFO: Read issue portal XML file passed '"+ str(self.xmlfile) + "'")
+            with open(self.xmlfile, encoding='utf-8') as fp:
+                input = fp.read()
 
-    soup = BeautifulSoup(input, 'html.parser')
-    htmltable = soup.body.find("table", attrs={"class": "table-issue-summary"})
-    trows = htmltable.find_all('tr')
+        if (not input):
+            if self.verbose:
+                print("ERROR: No input in passed XML issue portal export file file!")
+            return 0
+        if self.verbose:
+            print("INFO: Import detector / issue information.")
+        
 
-    headerrow = [th.get_text(strip=True)
-                 for th in trows[0].find_all('th')]  # header row
-    if len(headerrow) == 0:
-        headerrow = [th.get_text(strip=True) for th in trows[0].find_all(
-            "td", attrs={"class": "heading"})]  # header row
+        soup = BeautifulSoup(input, 'xml')
+        pv = soup.find('product_version').get_text(strip=True)
+        pvv = pv[-len(self.compiler_version):] 
+        err =  "\nERROR: XML file is for wrong compiler version\nERROR: Expect file for 'TriCore {}' saw tag '{}' ".format(self.compiler_version, pv)
+        assert self.compiler_version == pvv, err
+        
+        all_issues = soup.find_all('issue')
+        number_of_issues = len(all_issues)
 
-    if len(headerrow) > 0:
-        trows = trows[1:]  # skip header row if any
+        for index, issue in enumerate(all_issues):
+            id = issue.find('id').get_text(strip=True)
+            summary = issue.find('summary').get_text(strip=True)
+        
+            component = ",".join([l.get_text(strip=True) for l in issue.find_all(
+                'component')])
 
-#    if verbose:
- #       print(headerrow)
- #       print('\n')
+            affected_toolchain = ",".join([l.get_text(strip=True) for l in issue.find_all(
+                'affected_toolchain')])
+            if len(affected_toolchain) == 0:
+                affected_toolchain = ''
 
-    # we use standardize column names and don't care what is written on web/file
+            sil = issue.find('sil').get_text(strip=True)
 
-    for row in trows:
-        # Here we need manually sort what we get from website to sorting order in the namedTuple ()
-        #  hardcoded :-|
-        #  Website order
-        # <td class="td-issue-id">
-        # <td class="td-issue-sil">
-        # <td class="td-issue-component">
-        # <td class="td-issue-affected-toolchains">
-        # <td class="td-issue-summary">
-        # <td class="td-issue-inspector">
-        # <td class="td-issue-date"> CREATED
-        # <td class="td-issue-date"> UPDATE
-        # SEE issue_store.HEADER_ENTRIES / TYPES
-        #             'issue_id',
-        #            'issue_sil',
-        #            'issue_summary',
-        #            'issue_created',
-        #            'issue_updated',
-        #            'issue_component',
-        #            'affected_toolchains',
-        #            'issue_inspector'
+            published = issue.find('published').get_text(strip=True)
+            if len(published) == 0:
+                published = ''
+        
+            updated = issue.find('updated').get_text(strip=True)
+            if len(updated) == 0:
+                updated = ''
 
-        col = [td.get_text(strip=True) for td in row.find_all(
-            'td', attrs={"class": "td-issue-id"})]
-        if len(col) == 1:
-            cols = col
+            mitigation = issue.find('mitigation').get_text(strip=True)
+            if len(mitigation) == 0:
+                mitigation = ''
+
+            affected_version = ','.join([l.get_text(strip=True) for l in issue.find_all(
+                                    'affected_version')])    
+            if len(affected_version)== 0:
+                affected_version = ''
+
+            fix_version = ','.join([l.get_text(strip=True) for l in issue.find_all(
+                                    'fix_version')])    
+            if len(fix_version) == 0:
+                fix_version = ''
+
+            description = issue.find('description').get_text(strip=True)
+
+            inspector_version = ','.join([l.get_text(strip=True) for l in issue.find_all(
+                'inspector')])
+
+            if len(inspector_version) == 0:
+                inspector_version = ''
+
+            row = [id, sil, mitigation, affected_version, fix_version, summary, description, published,
+                updated, component, affected_toolchain, inspector_version]
+
+            assert len(XML_EXPORT_RECORD) == len(row), "ERROR: There might be an inconsistent with assumed XML structure."
+                                                            
+            # unpack list into PortalIssue
+            entry = PortalIssue(*row)  
+            self._addPortalIssue( entry )
+            
+        return self._countOfRows( "PortalIssues")         
+
+
+
+    def getListOfDetectableIssues( self ) -> list:
+        self.cur.execute( "SELECT id FROM ReleaseNoteIssues ORDER BY id")
+        return [ id[0] for (id) in self.cur.fetchall() ]
+
+
+    def getPortalIssue( self, id : str ) -> PortalIssue:
+        """Search issue id in passed dataframe.
+        Args:
+            id (str): issue id, e.g. TCVX-xxxxx
+        
+        Returns:
+            PortalIssue:  Record for the issue id or None when not found
+            
+            Note: Within current TASKING issue portal XML export no issue which was closed with won't fix is include ...
+        """
+        row = self.cur.execute( "SELECT * FROM PortalIssues WHERE id = ? ORDER BY id", (id,)).fetchone()
+        
+        if row:
+            return PortalIssue(*row)
         else:
-            cols = ['n/a']
-        col = [td.get_text(strip=True) for td in row.find_all(
-            'td', attrs={"class": "td-issue-sil"})]
-        if len(col) == 1:
-            cols += col
+            return None
+
+    def getReleaseNoteIssue( self, id : str ) -> ReleaseNoteIssue:
+        """Search issue id in ReleaseNoteIssues Table
+        Args:
+            id (str): issue id, e.g. TCVX-xxxxx
+        
+        Returns:
+            ReleaseNoteIssue:  Record for the issue id or None when not found
+            
+            Note: For each issue which has a detector there is only one release note issue record ...
+        """
+        row = self.cur.execute( "SELECT * FROM ReleaseNoteIssues WHERE id = ? ORDER BY id", (id,)).fetchone()
+        
+        if row:
+            return ReleaseNoteIssue(*row)
         else:
-            cols += ['n/a']
-        col = [td.get_text(strip=True) for td in row.find_all(
-            'td', attrs={"class": "td-issue-summary"})]
-        if len(col) == 1:
-            cols += col
-        else:
-            cols += ['n/a']
-        # NOTE here we get 2 --> as we have created/update one after the other in nameTuple we are fine
-        col = [td.get_text(strip=True) for td in row.find_all(
-            'td', attrs={"class": "td-issue-date"})]
-        if len(col) == 2:
-            cols += col
-        elif len(col) == 1:
-            cols += col + ['n/a']
-        else:
-            cols += ['', '']
+            return None
+                        
+    def getIssue( self, id : str ) -> Issue:
+        """_summary_
 
-        col = [td.get_text(strip=True) for td in row.find_all(
-            'td', attrs={"class": "td-issue-component"})]
-        if len(col) == 1:
-            cols += col
-        else:
-            cols += ['n/a']
+        Args:
+            id (str): issue id, e.g. TCVX-xxxxx
 
-        col = [td.get_text(strip=True) for td in row.find_all(
-            'td', attrs={"class": "td-issue-affected-toolchains"})]
-        if len(col) == 1:
-            cols += col
-        else:
-            cols += ['n/a']
+        Returns:
+            Issue: Record for the issue id or None when not found
+            
+            Note: The issue might only include partial information from release note.
+        """
+        ri = self.getReleaseNoteIssue( id )
+        pi = self.getPortalIssue(id)
+        
+        if pi and ri:
+            pd = pi._asdict()
+            rd = ri._asdict()
+            # remove the common fields 
+            # CHECK we could assert here...
+            del rd["id"]
+            del rd["summary"]
+            pd.update( rd )
+            i = Issue( **pd )
+            return i
+        elif pi:
+            pd = pi._asdict()
+            i = Issue( **pd )
+            return i
+        elif ri:
+            rd = ri._asdict()
+            i = Issue( **rd )
+            return i
+        return None
+    
+    def isIssueAffectingCompilerVersion( self, id : str, cv: str ) -> bool:
+        """Check if issue id is affecting a specific compiler version.
 
-        col = [td.get_text(strip=True) for td in row.find_all(
-            'td', attrs={"class": "td-issue-inspector"})]
-        if len(col) == 1:
-            cols += col
-        else:
-            cols += ['n/a']
+        Args:
+            id (str): issue id, e.g. TCVX-xxxxx
+            cv (str): compiler version to check, e.g. v6.3r1p7 or v6.3rp9
+                                    
+        Returns:
+            bool: if issue affects compiler version. True if no data avilable available
+            Note: Within current TASKING issue portal XML export no issue which was closed with won't fix is include ...
+        """
+        i = self.getIssue( id, )
+        if i and len(i.affected_version) > 0:
+            affected = i.affected_version.split(',')
+            if cv in affected:
+                return True    
+            else:
+                return False            
 
-        if verbose:
-            # print( "COLS\n " + str(cols) )
-            # TODO THIS CHECK BETTER as here we now have already correct data
-            if ist.HEADER_ENTRIES_NO != len(cols):
-                print("WARN:There might be a inconsistent rows within issue table row!")
-
-        entry = Portalissue(*cols)
-        # print(entry)
-        issuedict[entry.issue_id] = entry
-
-    return issuedict
-
-
-'''
-How to use returned issue dict?
-
-db = populateDBFromIssuePortal( "filename.html" , false);
-entry = d.get("TCVX-37419")
-if entry:
-    # follwing fields are filled from Wbsite/File
-    entry.issue_id
-    entry.issue_sil
-    entry.issue_component
-    entry.affected_toolchains,
-    entry.issue_summary
-    entry.issue_inspector
-    entry.issue_created
-    entry.issue_updated
-...
-'''
+        # Safe approach: 
+        # - No affected version found in issue in database (because XML export is not including 'closed' issues)
+        # or
+        # - Issue not found in database (bogus key)
+        return True

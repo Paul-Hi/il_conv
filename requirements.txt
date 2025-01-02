@@ -1,6 +1,5 @@
 ##### Requirements without Version Specifiers ######
 beautifulsoup4
 lxml
-requests
 openpyxl
 Pillow
