@@ -45,7 +45,7 @@ def parse_arguments() -> argparse.Namespace:
                         help="A filename for the output file (without file extension). Default to '--output=insp_output'")
 
 #    parser.add_argument("--output-format", dest='output_format', type=str, default="xlsx", choices=['XLSX', 'xlsx', 'HTML', 'html'],
-    parser.add_argument("--output-format", dest='output_format', type=str, default="xlsx", choices=['XLSX', 'xlsx],
+    parser.add_argument("--output-format", dest='output_format', type=str, default="xlsx", choices=['XLSX', 'xlsx'],
                         help="Generate output format (HTML not supported in this version) Default to '--output-format=xlsx'.")
 
     parser.add_argument("--format-mode", dest='format_mode', type=str, default="normal", choices=['COMPRESSED', 'NORMAL', 'EXPANDED'],
