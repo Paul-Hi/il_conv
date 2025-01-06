@@ -96,7 +96,7 @@ def generateExcel(output_file_name: str, db: IssueDB, log_db:LogDB,
         
         col_style = [('file', False, True, -1),  ('string', True, False, 40),  ('string', False, True, -1),  ('hyper', False, True, 10),
                         ('string', False, True, -1),  ('string', False, True, -1), ('string', False, True, 60), ('string', False, False, 60),
-                        ('string', False, False, 60), ('string', True, True, -1), ('string', True, False, -1), ('string', True, False, -1)
+                        ('string', False, False, 60), ('string', True, True, -1), ('string', True, True, -1), ('string', True, False, -1)
                         ]
 
         # Add headings
@@ -127,7 +127,7 @@ def generateExcel(output_file_name: str, db: IssueDB, log_db:LogDB,
         # (type, Autofit, visible, , autofit max chars)
         col_style = [('file', False, True, -1),  ('string', True, True, 40),  ('string', False, True, -1),  ('hyper', False, True, 10),
                         ('string', False, True, -1),  ('string', False, True, -1), ('string', False, True, 60), ('string', False, False, 60),
-                        ('string', False, False, 60), ('string', True, True, -1), ('string', True, False, -1)
+                        ('string', False, True, 60), ('string', True, True, -1), ('string', True, False, -1)
                         ]
         # Add headings
         ws.append(headings)
