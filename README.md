@@ -13,9 +13,12 @@
 
 
 ## Background:
-TASKING Inspector products are modified TASKING C/C++ compiler to help their customers to evaluate if they might be impacted by a know issue of the compiler and to decided how they can mitigate the issue (e.g. use a newer version / patch of the compiler, rewriting their code, changing the used compiler > il_conv -v --output-format=xlsx --format-mode=NORMAL -x issues_tasking_TCVX_v6.3r1.xml -r readme_tricore_v6.3r1_inspector_v1.0r6.html \<logfile.txt\>
->  ...
-settings etc....)
+TASKING Inspector products are modified TASKING C/C++ compiler. Inspector helps compiler users to evaluate if they might be impacted by a know issue of the compiler and to decided how to mitigate the issue.
+Mitigation examples:
+- Use a newer compiler version or latested patch
+- Change command line option
+- Rewriting source code
+...
 
 ## How does work?
 TASKING customer run the Inspector 'compiler' like the normal compiler from TASKING and get an enriched log output which shows the location (issue detected, filename, line, column).
