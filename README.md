@@ -26,18 +26,16 @@ A small tool to generate XLSX files (for Excel) enriched with all known issue in
 HTML output is prepared but design of the output is currently under evaluation and disabled in the new version.
 
 ## Example usage:
-
-> il_conv -?
->  ...
-> il_conv -v --output-format=COMPACT -x issues_tasking_TCVX_v6.3r1.xml -r readme_tricore_v6.3r1_inspector_v1.0r6.html \<logfile.txt\>
->  ...
-or
-> il_conv -v --format-mode=NORMAL -x issues_tasking_TCVX_v6.3r1.xml -r readme_tricore_v6.3r1_inspector_v1.0r6.html \<logfile.txt\>
->  ...
-or
-> il_conv -v --format-mode=EXTENDED -x issues_tasking_TCVX_v6.3r1.xml -r readme_tricore_v6.3r1_inspector_v1.0r6.html \<logfile.txt\>
->  ...
-
+```
+$ il_conv -?
+...
+$ il_conv -v --output-format=COMPACT -x issues_tasking_TCVX_v6.3r1.xml -r readme_tricore_v6.3r1_inspector_v1.0r6.html \<logfile.txt\>
+...
+$ il_conv -v --format-mode=NORMAL -x issues_tasking_TCVX_v6.3r1.xml -r readme_tricore_v6.3r1_inspector_v1.0r6.html \<logfile.txt\>
+...
+$ il_conv -v --format-mode=EXTENDED -x issues_tasking_TCVX_v6.3r1.xml -r readme_tricore_v6.3r1_inspector_v1.0r6.html \<logfile.txt\>
+...
+```
 ## Features:
 - [x] Command line tool
 - [x] Can use all published information from TASKING issue portal (XML export to be done by user)
