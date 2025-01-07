@@ -16,7 +16,7 @@ import export
 import export_xlsx
 import export_html
 
-VERSION_STR = "v2.0-beta3"
+VERSION_STR = "v2.0-beta4"
 
 
 def parse_arguments() -> argparse.Namespace:

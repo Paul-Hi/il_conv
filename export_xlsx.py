@@ -53,27 +53,40 @@ def generateExcel(output_file_name: str, db: IssueDB, log_db:LogDB,
     # dict of filename to filepath mapping
     fn2fp = {}
 
+    Hide = False;
+    Visible = True;
 
     if fm == Formatmode.COMPRESSED:
-        headings = ['File Name', 'File Path', "Detector" ,'Issue ID',
-                    'SIL',   'Fixed Version', 'Summary', "Description", 
-                    "Mitigation", 'Lines', 'detection type for each line in lines (\'d\' or \'p\')']
-        # (type, Autofit, visible, , autofit max chars)
-        col_style = [('file', False, True, -1),  ('string', True, False, 40),  ('string', False, True, -1),  ('hyper', False, True, 10),
-                        ('string', False, True, -1),  ('string', False, True, -1), ('string', False, True, 60), ('string', False, False, 60),
-                        ('string', False, False, 60), ('string', True, True, -1), ('string', True, False, -1)
+        # (fieldname, type, Autofit, visible, , autofit max chars)
+        col_style = [("File Name", 'file', False, Visible, -1), 
+                     ("File Path", 'string', True, Hide, 40),
+                     ("Detector", 'string', False, Visible, -1),
+                     ("Issue ID", 'hyper', False, Visible, 10),
+                     ("SIL", 'string', False, Visible, -1), 
+                     ("Fixed Version", 'string', False, Visible, -1), 
+                     ("Summary", 'string', False, Visible, 60),
+                     ("Description", 'string', False, Hide, 60),
+                     ("Mitigation", 'string', False, Hide, 60),
+                     ("Lines", 'string', True, Visible, -1),
+                     ("Detection type for each line in lines ('d' or 'p')",'string', True, Hide, -1),
                         ]
+        headings = [ f for (f, _, _, _, _) in col_style]
         # Add headings
         ws.append(headings)
 
         curs = log_db.conn.execute( "select file, filepath, issueid, group_concat(line), group_concat(detectiontype) FROM Logs GROUP By filepath, issueid ORDER BY file, issueid")
     
         for (fn, fp, id, lines, detections) in curs:
-            
-            if fn2fp.get(fn) != None and fn2fp[fn]!=fp:
-                print(f"WARN: Your project seems to have multiple times file '{fn}' in different folders, you should use expaned format and looking at the full pathname within the report.")
-            fn2fp[fn] = fp
-            
+        
+            if fn2fp.get(fn) != None:
+                (count, existing_fp) = fn2fp[fn]
+                if existing_fp != fp:
+                    print(f"WARN: Your project seems to have multiple times file '{fn}' in different folders, you should use expaned format and looking at the full pathname within the report.")
+                    fn2fp[fn] = (count+1, fp)
+            else:
+                # first time or reoccurance of same fp for a fn 
+                fn2fp[fn] = (1, fp)
+        
             
             #print (row)
             ii = db.getIssue( id )
@@ -89,15 +102,21 @@ def generateExcel(output_file_name: str, db: IssueDB, log_db:LogDB,
             ws.append(csvrow)
     
     elif fm == Formatmode.NORMAL:
-        #overwrite heading and styles for normal mode
-        headings = ['File Name', 'File Path', "Detector" ,'Issue ID',
-                    'SIL',   'Fixed Version', 'Summary', "Description", 
-                    "Mitigation", 'Line', 'Column', 'detection type for line (\'d\' or \'p\')']
-        
-        col_style = [('file', False, True, -1),  ('string', True, False, 40),  ('string', False, True, -1),  ('hyper', False, True, 10),
-                        ('string', False, True, -1),  ('string', False, True, -1), ('string', False, True, 60), ('string', False, False, 60),
-                        ('string', False, False, 60), ('string', True, True, -1), ('string', True, True, -1), ('string', True, False, -1)
+        # (fieldname, type, Autofit, visible, , autofit max chars)
+        col_style = [("File Name", 'file', False, Visible, -1), 
+                     ("File Path", 'string', True, Hide, 40),
+                     ("Detector", 'string', False, Visible, -1),
+                     ("Issue ID", 'hyper', False, Visible, 10),
+                     ("SIL", 'string', False, Visible, -1), 
+                     ("Fixed Version", 'string', False, Visible, -1), 
+                     ("Summary", 'string', False, Visible, 60),
+                     ("Description", 'string', False, Hide, 0),
+                     ("Mitigation", 'string', False, Hide, 60),
+                     ("Line", 'int', True, Visible, -1),
+                     ("Column", 'int', True, Visible, -1),
+                     ("Detection type for line ('d' or 'p')",'string', True, False, -1),
                         ]
+        headings = [ f for (f, _, _, _, _) in col_style]
 
         # Add headings
         ws.append(headings)
@@ -105,8 +124,15 @@ def generateExcel(output_file_name: str, db: IssueDB, log_db:LogDB,
         curs = log_db.conn.execute( "select file, filepath, issueid, line, column, detectiontype FROM Logs ORDER By file, rowid")
     
         for (fn, fp, id, line, column, detection) in curs:
-            
-            fn2fp[fn] = fp
+
+            if fn2fp.get(fn) != None:
+                (count, existing_fp) = fn2fp[fn]
+                if existing_fp != fp:
+                    print(f"WARN: Your project seems to have multiple times file '{fn}' in different folders, you should use expaned format and looking at the full pathname within the report.")
+                    fn2fp[fn] = (count+1, fp)
+            else:
+                # first time or reoccurance of same fp for a fn 
+                fn2fp[fn] = (1, fp)
             
             ii = db.getIssue( id )
 
@@ -121,21 +147,36 @@ def generateExcel(output_file_name: str, db: IssueDB, log_db:LogDB,
             ws.append(csvrow)
 
     elif fm == Formatmode.EXPANDED:
-        headings = ['File Name', 'File Path', "Detector" ,'Issue ID',
-                    'SIL',   'Fixed Version', 'Summary', "Description", 
-                    "Mitigation", 'Line', 'detection type for line (\'d\' or \'p\')']
-        # (type, Autofit, visible, , autofit max chars)
-        col_style = [('file', False, True, -1),  ('string', True, True, 40),  ('string', False, True, -1),  ('hyper', False, True, 10),
-                        ('string', False, True, -1),  ('string', False, True, -1), ('string', False, True, 60), ('string', False, False, 60),
-                        ('string', False, True, 60), ('string', True, True, -1), ('string', True, False, -1)
+        # (fieldname, type, Autofit, visible, , autofit max chars)
+        col_style = [("File Name", 'file', False, Visible, -1), 
+                     ("File Path", 'string', True, Visible, 40),
+                     ("Detector", 'string', False, Visible, -1),
+                     ("Issue ID", 'hyper', False, Visible, 10),
+                     ("SIL", 'string', False, Visible, -1), 
+                     ("Fixed Version", 'string', False, Visible, -1), 
+                     ("Summary", 'string', False, Visible, 60),
+                     ("Description", 'string', False, Visible, 70),
+                     ("Mitigation", 'string', False, Visible, 70),
+                     ("Line", 'int', True, Visible, -1),
+                     ("Column", 'int', True, Visible, -1),
+                     ("Detection type for line ('d' or 'p')",'string', True, Hide, -1),
                         ]
+        headings = [ f for (f, _, _, _, _) in col_style]
+
         # Add headings
         ws.append(headings)
 
         curs = log_db.conn.execute( "select file, filepath, issueid, line, column, detectiontype FROM Logs ORDER By file, issueid, line")
     
-        for (fn, fp, id, line, detection) in curs:
-            fn2fp[fn] = fp
+        for (fn, fp, id, line, column, detection) in curs:
+            if fn2fp.get(fn) != None:
+                (count, existing_fp) = fn2fp[fn]
+                if existing_fp != fp:
+                    print(f"WARN: Your project seems to have multiple times file '{fn}' in different folders, you should use expaned format and looking at the full pathname within the report.")
+                    fn2fp[fn] = (count+1, fp)
+            else:
+                # first time or reoccurance of same fp for a fn 
+                fn2fp[fn] = (1, fp)
             
             ii = db.getIssue( id )
 
@@ -145,7 +186,7 @@ def generateExcel(output_file_name: str, db: IssueDB, log_db:LogDB,
             detection = detection.replace("affected", "d")
             
             csvrow = [fn, fp, ii.detectiontype, ii.id , ii.sil, ii.fix_version, ii.summary, ii.description, 
-                        ii.mitigation, line, detection]
+                        ii.mitigation, line, column, detection]
             
             ws.append(csvrow)
 
@@ -161,7 +202,7 @@ def generateExcel(output_file_name: str, db: IssueDB, log_db:LogDB,
     dim_holder = ws.column_dimensions
     for i, col in enumerate(ws.iter_cols(min_row=1, max_col=ws.max_column, max_row=1)):
         #        for column_cells in ws['A:H']:
-        _, _, _, pro_chars = col_style[i]
+        _, _, _, _, pro_chars = col_style[i]
         column_letter = get_column_letter(col[0].column)
 
         if pro_chars == - 1:
@@ -172,7 +213,7 @@ def generateExcel(output_file_name: str, db: IssueDB, log_db:LogDB,
 
     # we know the table starts at column A, so we can use the types
     dim_holder = ws.column_dimensions
-    types, autofits, visiblities, maxchars = list(zip(*col_style))
+    fieldname, types, autofits, visiblities, maxchars = list(zip(*col_style))
     for i in range(0,len(types)):
         type_str = types[i]
         column_letter = (get_column_letter(i+1))
@@ -187,8 +228,10 @@ def generateExcel(output_file_name: str, db: IssueDB, log_db:LogDB,
             if "file" in type_str:
                 try:
                     ii = db.getIssue(id)
-                    cell.comment = openpyxl.comments.Comment(
-                        'HINT (file name might not have a unique path in your project):\n{}'.format(fn2fp[cell.value]), "generated", 100,640)
+                    (count, fp) = fn2fp[cell.value]
+                    if count > 1 and fm == Formatmode.COMPRESSED :
+                        cell.comment = openpyxl.comments.Comment(
+                        "HINT: File name '{}' is not unique within your project - the compressed formatting report might wrongly mix multiple occurances!!\n{}".format(cell.value, fp), "generated", 100,640)
                 except:
                     pass
             elif "datetime" in type_str:
