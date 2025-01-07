@@ -3,21 +3,20 @@ File:   il_conv.py
 Desc:   Main script file
 
 Copyright (C) 2022 Paul Himmler, Peter Himmler
+Copyright (C) 2024 Peter Himmler
 Apache License 2.0
 """
 
-
 import argparse
-import tables
-import export
-import issuedb
-from configs import get_defaultcfg, Config
-from issue_store import Issuestore
-from resources import resource_path
-from parse import parse_file
-import os
+from pathlib import Path
+from issuedb import IssueDB
+from parse import LogDB
 
-VERSION_STR = "0.96"
+import export
+import export_xlsx
+import export_html
+
+VERSION_STR = "v2.0-beta4"
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -27,47 +26,40 @@ def parse_arguments() -> argparse.Namespace:
         Namespace: The namespace filled with all command line arguments
 
     '''
-
     parser = argparse.ArgumentParser(
         fromfile_prefix_chars='@',
-        description='il_conv : preprocess and convert TASKING TriCore Inspector tool message Excel or HTML file.',
+        description='il_conv : Processes TASKING TriCore Inspector tool message and generate xlsx (Excel) report.',
         epilog='NOTE: If you want to pass a options file, pass filename with prepented  @ (like @foobar.txt),\
             the tool will read the content line by line and pass them as arguments to the tool itself.')
 
     parser.add_argument('-?', action='help',
                         default=argparse.SUPPRESS, help='show this help message and exit.')
 
-    parser.add_argument('--version', action='version',
+    parser.add_argument('-V', '--version', action='version',
                         version='%(prog)s ' + VERSION_STR)
 
-    parser.add_argument(
-        '-v', '--verbose', help="Allows to get more verbose output from the tool", action='store_true')
-
-    parser.add_argument("-tc", "--toolset", type=str, default="v6.2r2", choices=['v6.2r2', 'v6.3r1'],
-                        help="toolset/compiler toolchain version to lookup on issue portal." +
-                        "Default to 'v6.2r2")
-
-    parser.add_argument("--output-format", dest='output_format', type=str, default="xlsx", choices=['xlsx', 'html'],
-                        help="Generate output format. Default to '--output-format=xlsx'.")
+    parser.add_argument( '-v', '--verbose', 
+                        help="Allows to get more verbose output from the tool", action='store_true')
 
     parser.add_argument("--output", type=str, default="insp_output",
                         help="A filename for the output file (without file extension). Default to '--output=insp_output'")
 
-    parser.add_argument("-u", "--user", type=str, default="",
-                        help="This holds the user name from your login credential of the TASKING issue portal), default is ''")
+#    parser.add_argument("--output-format", dest='output_format', type=str, default="xlsx", choices=['XLSX', 'xlsx', 'HTML', 'html'],
+    parser.add_argument("--output-format", dest='output_format', type=str, default="xlsx", choices=['XLSX', 'xlsx'],
+                        help="Generate output format (HTML not supported in this version) Default to '--output-format=xlsx'.")
 
-    parser.add_argument("-p", "--password", type=str, default="",
-                        help="Pass your  password for your account on TASKING issue portal, default is ''")
+    parser.add_argument("--format-mode", dest='format_mode', type=str, default="normal", choices=['COMPRESSED', 'NORMAL', 'EXPANDED'],
+                        help="Set formatting mode, behaviour might not be available on all output formats (default: NORMAL)'.")
 
-    parser.add_argument(
-        "--dump-defaultcfg", help="Dumps default configuration and exit immediately.", action='store_true')
+    parser.add_argument("-x", "--xmlfile", type=str, required=True,
+                        help="Pass filename of issue portal xml export file.") 
 
-    parser.add_argument("--config", type=str,
-                        help="Export configuration file, allowing to select column and order for export.")
-
-    parser.add_argument("logfiles", type=str, nargs='*',
+    parser.add_argument("-r", "--relnotefile", type=str, required=True,
+                        help="Pass used Inspector Release Notes file name <readme_tricore_<COMPVERSION>_inspector_<INSPVERSION>.html")
+    
+    parser.add_argument("logfiles", type=str, nargs='+',
                         help="One or more  input logfiles for processing." +
-                        "Dedicated created inspector log (--insp-log= ...) or normal  tools output where all unrelatede diagnostic messages are skipped!")
+                        "E.g. dedicated created inspector log (--insp-log= ...) or normal inspector log output from your build!")
 
     args = parser.parse_args()
 
@@ -75,49 +67,59 @@ def parse_arguments() -> argparse.Namespace:
 
 
 def il_conv():
+    """Main working horse. Parse cmdline arguments, imports files, does some magic
+        and generate ignore files.
+    """     
     args = parse_arguments()
 
-    if args.dump_defaultcfg:
-        print(get_defaultcfg())
-        return
+    # check release notes file name and derive compiler and inspector version from it
+    relnote = Path(args.relnotefile)
+    assert relnote.is_file, "ERROR: Passed release note file '{}' is not a file".format(relnote)
+    stem = relnote.stem
+    assert stem.startswith( "readme_tricore_"), "ERROR: Passed release note file name '{}' doesn't start with 'readme_tricore_'".format(relnote)
+    
+    compiler_version= stem[ len("readme_tricore_") : ]
+    assert compiler_version.startswith("v6.2r2") or compiler_version.startswith("v6.3r1"), "ERROR: Passed release note file name compiler '{}' doesn't match 'v6.2r2' or 'v6.3r1'".format(relnote)
+    compiler_version = compiler_version[ : len('v6.3r1') ]
+
+    sidx = stem.rfind("v1.0r")
+    assert sidx != -1 and sidx >= len("readme_tricore_v6.3r1_inspector" ) -1, "ERROR:"
+    inspector_version = stem[ sidx : ]
+
+
+    xmlfile = Path(args.xmlfile)
+    assert xmlfile.is_file, "ERROR: Passed XML export file  '{}' is not a file".format(relnote)
+    
+    # generate
+    db = IssueDB( compiler_version, inspector_version, xmlfile, relnote, args.verbose)
+    
+    num = db.importReleaseNote()
+    if args.verbose:
+        print(f"INFO: Import {num} rows of detector information.")
+        
+    num = db.importXMLFile()
+    if args.verbose:
+        print(f"INFO: Import {num} rows of portal issue information.")
+    
 
     if not args.logfiles:
         print("Nothing todo...")
         return
-
-    configuration = Config(args.config)
-
-    table = tables.Table()
-
+    
+    log_db = LogDB(args.verbose)
+        
     if args.logfiles != None:
         for file in args.logfiles:
             print("... parsing file ", file, " ...")
-            table.extend(parse_file(file, configuration))
+            log_db.parse_log_file( file)
 
-    table.remove_duplicates()
-    if args.verbose:
-        print("... removing duplicates")
-
-    db = Issuestore()
-
-    if ((args.user != "") and (args.password != "")):
-        # try website
-        db = issuedb.populateDBFromIssuePortal(
-            args.user, args.password, args.toolset, args.verbose)
+    fm = export.Formatmode[args.format_mode.upper()]
+    output_fn = args.output + '-' + str(fm)[str(fm).find('.')+1:] + '.' + args.output_format.lower()
+    
+    if args.output_format == 'xlsx':                
+        export_xlsx.generateExcel(output_fn, db, log_db, fm,  args.verbose)
     else:
-        portal_test_data = os.path.join(
-            resource_path('testdata'), 'issue_portal_test_data.html')
-        db = issuedb.populatIssueDBFromFile(
-            portal_test_data, args.toolset, args.verbose)
-
-    if args.output_format == 'xlsx':
-        exporter = export.ExcelExporter()
-    else:
-        exporter = export.HTMLExporter()
-
-    print("Exporting to " + args.output + "." + args.output_format+" ...")
-    exporter.export(table, args.output, configuration, args.verbose, db)
-
+        export_html.generateHTML( output_fn, db, log_db, fm, args.verbose)
 
 if __name__ == "__main__":
     il_conv()

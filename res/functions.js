@@ -52,6 +52,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 return parseInt(content);
             case 'datetime':
             case 'string':
+            case 'hyper':
+                
             default:
                 return content;
         }
