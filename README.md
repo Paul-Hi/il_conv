@@ -50,8 +50,8 @@ HTML output is prepared but design of the output is currently under evaluation a
 - Python 3.10 or later
 - openpyxl
 - Pillow
-- beautifulsoup4 (*pip install beautifulsoup4*)
--- lxml 
+- beautifulsoup4
+  - lxml 
 - ~~requests~~
 - ~~numpy~~
 - ~~datatable~~
