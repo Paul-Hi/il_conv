@@ -28,7 +28,7 @@ HTML output is prepared but design of the output is currently under evaluation a
 > il_conv -?
 >  ...
 
-> il_conv -v --output-format=xlsx --format-mode=NORMAL -x issues_tasking_TCVX_v6.3r1.xml -r readme_tricore_v6.3r1_inspector_v1.0r6.html", logfile
+> il_conv -v --output-format=xlsx --format-mode=NORMAL -x issues_tasking_TCVX_v6.3r1.xml -r readme_tricore_v6.3r1_inspector_v1.0r6.html \<logfile.txt\>
 
 
 ## Features:

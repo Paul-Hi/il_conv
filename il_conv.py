@@ -16,7 +16,7 @@ import export
 import export_xlsx
 import export_html
 
-VERSION_STR = "2.0 (beta)"
+VERSION_STR = "v2.0-beta3"
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -57,7 +57,7 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("-r", "--relnotefile", type=str, required=True,
                         help="Pass used Inspector Release Notes file name <readme_tricore_<COMPVERSION>_inspector_<INSPVERSION>.html")
     
-    parser.add_argument("logfile(s)", type=str, nargs='+',
+    parser.add_argument("logfiles", type=str, nargs='+',
                         help="One or more  input logfiles for processing." +
                         "E.g. dedicated created inspector log (--insp-log= ...) or normal inspector log output from your build!")
 
