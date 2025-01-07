@@ -69,8 +69,8 @@ Be aware that nuitka builds depends on a bunch of addtional things to be install
 Paul & Peter
 
   
-## This script is as is, no notion of completeness or that it works under all circumstances ...
-  
+Note: 
+This script is as is, no notion of completeness or that it works under all circumstances ...
 ### We'll get not payed for that work it's just for fun, so please be polite.
   
 
