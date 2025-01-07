@@ -2,7 +2,7 @@
   <img src="res/logo.png" width="20%">
 </p>
 
-# *New* Version: v2.0 (beta)
+# *New* Version: v2.0 
 - Removed: Parsing of Issue Portal website - no internet access required to use
 - Added:   Importing issue information from user provided product specific XML file
 - Added:   Importing of Inspector information from user provided product specific release notes.
