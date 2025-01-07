@@ -20,10 +20,10 @@ Mitigation examples:
 - Rewriting source code
 ...
 
-## How does work?
+### How does work?
 TASKING customer run the Inspector 'compiler' like the normal compiler from TASKING and get an enriched log output which shows the location (issue detected, filename, line, column).
 
-## il_conv (**I**nspector **L**og **conv**erter)
+## Supported by **il_conv** (**I**nspector **L**og **conv**erter)
 A small tool to generate XLSX files (for Excel) enriched with all known issue information incl. direct links to latestest information about an known issue on TASKINGs issue portal.
 
 HTML output is prepared but design of the output is currently under evaluation and disabled in the new version.
