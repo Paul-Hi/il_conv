@@ -29,11 +29,11 @@ HTML output is prepared but design of the output is currently under evaluation a
 ```
 $ il_conv -?
 ...
-$ il_conv -v --output-format=COMPACT -x issues_tasking_TCVX_v6.3r1.xml -r readme_tricore_v6.3r1_inspector_v1.0r6.html \<logfile.txt\>
+$ il_conv -v --output-format=COMPACT -x issues_tasking_TCVX_v6.3r1.xml -r readme_tricore_v6.3r1_inspector_v1.0r6.html logfile.txt
 ...
-$ il_conv -v --format-mode=NORMAL -x issues_tasking_TCVX_v6.3r1.xml -r readme_tricore_v6.3r1_inspector_v1.0r6.html \<logfile.txt\>
+$ il_conv -v --format-mode=NORMAL -x issues_tasking_TCVX_v6.3r1.xml -r readme_tricore_v6.3r1_inspector_v1.0r6.html build-part1.log build-part2.log
 ...
-$ il_conv -v --format-mode=EXTENDED -x issues_tasking_TCVX_v6.3r1.xml -r readme_tricore_v6.3r1_inspector_v1.0r6.html \<logfile.txt\>
+$ il_conv -v --format-mode=EXTENDED -x issues_tasking_TCVX_v6.2r2.xml -r readme_tricore_v6.2r2_inspector_v1.0r7.html build.log
 ...
 ```
 ## Features:
