@@ -2,7 +2,7 @@
   <img src="res/logo.png" width="20%">
 </p>
 
-# *New* Version: v2.0 
+# *New* Version: v2.1 
 - Add:      Excel overview sheet
 - Modified: Excel export now generate all variants into one workbook
 - Modified: Remove formatting mode from cmdline options to simplify
