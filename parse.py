@@ -77,7 +77,8 @@ class LogDB(object):
                                 e.file, e.line, e.column, e.detectiontype, e.issueid, e.extension))
             self.conn.commit()
         except sqlite3.IntegrityError as ie:
-#            if self.verbose:
+            # Following would be helpful but as Inspector diagnostic messages might be unavoidably duplicated this is commented out
+#           if self.verbose:
 #                print(f"IGNORE: DB Integrity Error. You might have added a log file twice. Same (locations of) detection message are ignored. {e}.")
             pass
 

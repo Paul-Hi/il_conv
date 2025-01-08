@@ -13,4 +13,4 @@ from parse import LogDB, _DETECTION_RECORD_INFO, Detection
 
 
 from enum import Enum
-Formatmode = Enum('Formatmode', ['COMPRESSED', 'NORMAL', 'EXPANDED'])
+Formatmode = Enum('Formatmode', ['COMPACT', 'NORMAL', 'EXTENDED'])
