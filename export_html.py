@@ -15,8 +15,7 @@ from export import Formatmode, LogDB, IssueDB
 from resources import LOGO_BASE64_TXT, DEFAULT_CSS, FUNCTIONS_JS
 
 
-def generateHTML(output_file_name: str, db: IssueDB, log_db:LogDB,  
-            fm : Formatmode = Formatmode.NORMAL, verbose: bool = False) :
+def generateHTML(output_file_name: str, db: IssueDB, log_db:LogDB, verbose: bool = False) :
     '''Generate HTML output.
 
     Args:
@@ -32,59 +31,54 @@ def generateHTML(output_file_name: str, db: IssueDB, log_db:LogDB,
 
     order_arrows = '\n     <i class="fa fa-caret-up" aria-hidden="true"></i>\n     <i class="fa fa-caret-down" aria-hidden="true"></i>'
 
-    if fm==Formatmode.COMPRESSED:
-        pass
-    if fm==Formatmode.EXPANDED:
-        pass
-    if fm==Formatmode.NORMAL:
-        #overwrite heading and styles for normal mode
-        headings = ['File Name', 'File Path', "Detection" ,'Issue ID',
-                    'SIL',   'Fixed Version',
-                    'Summary',
-                    'Line', 'Column',
-                    "Description", 
-                    "Mitigation", 
-                    'detection type for line (\'d\' or \'p\'']
-        # (type, size, visible, , td classes)
-        col_style = [('string', False, True, 'c-file' ), 
-                        ('string', True, True, 'c-filepath'),
-                        ('string', False, True, ''),
-                        ('hyper', False, True, 'c-issueid'),
-                        ('string', False, True, 'c-sil'),
-                        ('string', False, True, 'c-fixedversion'),
-                        
-                        ('string', False, True, 'c-summary'),
-                        ('int', True, True, ''), ('int', True, True, ''),
-                        ('string', False, False, 'c-desc'),
-                        ('string', False, False, 'c-mitigation'),
-                        ('string', True, True, ''),]
-        
-        assert (len(col_style) == len(headings))
+    #overwrite heading and styles for normal mode
+    headings = ['File Name', 'File Path', "Detection" ,'Issue ID',
+                'SIL',   'Fixed Version',
+                'Summary',
+                'Line', 'Column',
+                "Description", 
+                "Mitigation", 
+                'detection type for line (\'d\' or \'p\'']
+    # (type, size, visible, , td classes)
+    col_style = [('string', False, True, 'c-file' ), 
+                    ('string', True, True, 'c-filepath'),
+                    ('string', False, True, ''),
+                    ('hyper', False, True, 'c-issueid'),
+                    ('string', False, True, 'c-sil'),
+                    ('string', False, True, 'c-fixedversion'),
+                    
+                    ('string', False, True, 'c-summary'),
+                    ('int', True, True, ''), ('int', True, True, ''),
+                    ('string', False, False, 'c-desc'),
+                    ('string', False, False, 'c-mitigation'),
+                    ('string', True, True, ''),]
+    
+    assert (len(col_style) == len(headings))
 
-        
-        tr_ths_row = '''
-   <tr>
-   ''' + '\n'.join( ['    <th class="draggable" draggable="true", data-type="{}"> {} {} </th>'.format(col_style[i][0], order_arrows, v) for i, v in enumerate(headings)] ) + '''
-   </tr>
-   '''
+    
+    tr_ths_row = '''
+<tr>
+''' + '\n'.join( ['    <th class="draggable" draggable="true", data-type="{}"> {} {} </th>'.format(col_style[i][0], order_arrows, v) for i, v in enumerate(headings)] ) + '''
+</tr>
+'''
 
-        # query log database 
-        curs = log_db.conn.execute( "select file, filepath, issueid, line, column, detectiontype FROM Logs ORDER By rowid")
-        tr_tds_rows = ''
-        for (fn, fp, id, line, column, detection) in curs:
-            ii = db.getIssue( id )
-            assert ii != None,  f'ERRRO: Log includes detected issue id but we have no information about it.\n{id} {fp} line'
-            detection = detection.replace("potential affected", "p")
-            detection = detection.replace("affected", "d")
-            raw = map( lambda x: pyhtml_escape(x), [
-                            fn, fp, ii.detectiontype, ii.id , ii.sil, ii.fix_version, ii.summary,
-                            line, column, ii.description, ii.mitigation, detection])
-            tr_tds_row = '''
-   <tr>
-   ''' + '\n'.join([ '\n'.join( ['    <td class="{}", fulltext="{}">{}</td>'.format(col_style[i][3],v, v[0:80]) for i,v in enumerate(raw)] ) ]) + '''
-   </tr>
-   '''
-            tr_tds_rows += tr_tds_row 
+    # query log database 
+    curs = log_db.conn.execute( "select file, filepath, issueid, line, column, detectiontype FROM Logs ORDER By rowid")
+    tr_tds_rows = ''
+    for (fn, fp, id, line, column, detection) in curs:
+        ii = db.getIssue( id )
+        assert ii != None,  f'ERRRO: Log includes detected issue id but we have no information about it.\n{id} {fp} line'
+        detection = detection.replace("potential affected", "p")
+        detection = detection.replace("affected", "d")
+        raw = map( lambda x: pyhtml_escape(x), [
+                        fn, fp, ii.detectiontype, ii.id , ii.sil, ii.fix_version, ii.summary,
+                        line, column, ii.description, ii.mitigation, detection])
+        tr_tds_row = '''
+<tr>
+''' + '\n'.join([ '\n'.join( ['    <td class="{}", fulltext="{}">{}</td>'.format(col_style[i][3],v, v[0:80]) for i,v in enumerate(raw)] ) ]) + '''
+</tr>
+'''
+        tr_tds_rows += tr_tds_row 
 
 
     with open(DEFAULT_CSS) as css:

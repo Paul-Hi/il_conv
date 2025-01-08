@@ -6,13 +6,19 @@ Copyright (C) 2024 Peter Himmler
 Apache License 2.0
 '''
 
-from ast import Dict
+from il_conv import VERSION_STR
+ 
 from datetime import datetime
 
 import openpyxl
+import openpyxl.workbook
+from openpyxl.workbook import Workbook
+import openpyxl.worksheet
+from openpyxl.worksheet import worksheet as Worksheet
+
 import openpyxl.styles
 import openpyxl.worksheet.table as xltables
-from openpyxl import Workbook
+
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.cell_range import CellRange
 from openpyxl.styles import Font, Alignment
@@ -30,33 +36,19 @@ from parse import LogDB, _DETECTION_RECORD_INFO, Detection
 from export import Formatmode
 
 
-def generateExcel(output_file_name: str, db: IssueDB, log_db:LogDB,  
-            fm : Formatmode = Formatmode.NORMAL, verbose: bool = False) :
-    '''Generate Excel output.
-
-    Args:
-        output_file_name (str): The name of the file to save
-        db (IssueDB): IssueDB from portal XML export related with Inspector release note
-        log_db (LogDB): Database from parse log detection entries
-        fm (FormatMode): Enum value to configure generator.
-        verbose (bool): Create verbose output during processing
-    '''
-
-    if verbose:
-        print("INFO: Generating Excel Workbook")
-
-    wb = Workbook()
-    wb.iso_dates = True
-    ws = wb.active
-    ws.title = "INSPECTOR Report"
+def _addOneSheet( wb : Workbook, db: IssueDB, log_db: LogDB, fm : Formatmode, verbose: bool = False):
 
     # dict of filename to filepath mapping
-    fn2fp = {}
-
     Hide = False;
     Visible = True;
+    fn2fp = {}
+    worksheet_name = None
+    ws = None # Worksheet
 
-    if fm == Formatmode.COMPRESSED:
+    if fm == Formatmode.COMPACT:
+        worksheet_name = "Report compact"
+        ws = wb.create_sheet(worksheet_name) 
+
         # (fieldname, type, Autofit, visible, , autofit max chars)
         col_style = [("File Name", 'file', False, Visible, -1), 
                      ("File Path", 'string', True, Hide, 40),
@@ -102,6 +94,9 @@ def generateExcel(output_file_name: str, db: IssueDB, log_db:LogDB,
             ws.append(csvrow)
     
     elif fm == Formatmode.NORMAL:
+        worksheet_name = "Report normal"
+        ws = wb.create_sheet(worksheet_name) 
+
         # (fieldname, type, Autofit, visible, , autofit max chars)
         col_style = [("File Name", 'file', False, Visible, -1), 
                      ("File Path", 'string', True, Hide, 40),
@@ -146,7 +141,10 @@ def generateExcel(output_file_name: str, db: IssueDB, log_db:LogDB,
             
             ws.append(csvrow)
 
-    elif fm == Formatmode.EXPANDED:
+    elif fm == Formatmode.EXTENDED:
+        worksheet_name = "Report extended"
+        ws = wb.create_sheet(worksheet_name) 
+
         # (fieldname, type, Autofit, visible, , autofit max chars)
         col_style = [("File Name", 'file', False, Visible, -1), 
                      ("File Path", 'string', True, Visible, 40),
@@ -189,9 +187,6 @@ def generateExcel(output_file_name: str, db: IssueDB, log_db:LogDB,
                         ii.mitigation, line, column, detection]
             
             ws.append(csvrow)
-
-
-
     
     # calculate max # of character for all columns
     max_chars = []
@@ -260,11 +255,12 @@ def generateExcel(output_file_name: str, db: IssueDB, log_db:LogDB,
     
     cell_range = CellRange(min_col=1, min_row=2, max_col=ws.max_column, max_row=ws.max_row+1)
 
-    tab = xltables.Table(displayName="Data", ref=str(cell_range))
-
+    table_name = "Data_" + str(fm)[str(fm).find('.')+1:]
+    tab = xltables.Table(displayName=table_name, ref=str(cell_range))
     style = xltables.TableStyleInfo(name="TableStyleLight9")
 
     tab.tableStyleInfo = style
+    
     ws.add_table(tab)
 
     ws.insert_rows(1)
@@ -276,16 +272,119 @@ def generateExcel(output_file_name: str, db: IssueDB, log_db:LogDB,
     ws.add_image(img)
     openpyxl.comments.Comment
 
-    ws.row_dimensions[1].height=None # get dimension for row 3
-    ws['E1'] = 'INSPECTOR Report.'
-    ws['E1'].font = Font(bold=True, size=26)
-    now = "Generated: " + datetime.today().isoformat() 
-    ws['C1'] = now
-    ws['C1'].number_format = openpyxl.styles.numbers.FORMAT_TEXT
-    ws['C1'].font = Font(bold=True, size=9)
+    ws.row_dimensions[1].height=40
+    ws['D1'].alignment = Alignment( vertical = "center" )
+    ws['D1'] = worksheet_name
+    ws['D1'].font = Font(bold=True, size=26)
 
     if verbose:
-        print(f"INFO: Write to file '{output_file_name}'")
+        print(f"INFO:  Generating Excel Worksheet '{worksheet_name}'")    
+
+def generateExcel(output_file_name: str, db: IssueDB, log_db:LogDB, verbose: bool = False) :
+    '''Generate Excel output.
+
+    Args:
+        output_file_name (str): The name of the file to save
+        db (IssueDB): IssueDB from portal XML export related with Inspector release note
+        log_db (LogDB): Database from parse log detection entries
+        fm (FormatMode): Enum value to configure generator.
+        verbose (bool): Create verbose output during processing
+    '''
+
+    if verbose:
+        print("INFO: Generating Excel Workbook")
+
+    wb = Workbook()
+    wb.iso_dates = True
+    ws = wb.active
+    ws.title = "TriCore Inspector Reports"
+    
+    img = openpyxl.drawing.image.Image(LOGO_PNG)
+    img.anchor = 'A1'
+    img.width = 64
+    img.height = 64
+    ws.add_image(img)
+    openpyxl.comments.Comment
+
+    ws.row_dimensions[1].height=54
+    ws['B1'].alignment = Alignment( vertical = "center" )
+    ws['B1'] = ws.title
+    ws['B1'].font = Font(bold=True, size=26)
+    
+    
+    ws['A3'] = "Generated at:"
+    ws['A3'].number_format = openpyxl.styles.numbers.FORMAT_TEXT
+    ws['A3'].font = Font(bold=True, size=12)
+
+    ws['B3'] = datetime.today().isoformat() 
+    ws['B3'].number_format = openpyxl.styles.numbers.FORMAT_TEXT
+    ws['B3'].font = Font(size=12)
+
+
+    ws['A4'] = "Generated by:" 
+    ws['A4'].number_format = openpyxl.styles.numbers.FORMAT_TEXT
+    ws['A4'].font = Font(bold=True, size=12)
+
+    ws['B4'] = f"il_conv ({VERSION_STR})"
+    ws['B4'].number_format = openpyxl.styles.numbers.FORMAT_TEXT
+    ws['B4'].font = Font(size=12)
+
+    ws['A5'] = "SPDX short identifier:"
+    ws['A5'].number_format = openpyxl.styles.numbers.FORMAT_TEXT
+    ws['A5'].font = Font(bold=True, size=12)
+
+    ws['B5'] = "Apache-2.0"
+    ws['B5'].number_format = openpyxl.styles.numbers.FORMAT_TEXT
+    ws['B5'].font = Font(size=12)
+    
+    ws['A6'] = "Repository:"
+    ws['A6'].number_format = openpyxl.styles.numbers.FORMAT_TEXT
+    ws['A6'].font = Font(bold=True, size=12)
+    ws['B6'] = "https://github.com/Paul-Hi/il_conv"
+    ws['B6'].number_format = openpyxl.styles.numbers.FORMAT_TEXT
+    ws['B6'].font = Font(size=12)
+    
+
+    ws['A8'] = "XML data source:"
+    ws['A8'].number_format = openpyxl.styles.numbers.FORMAT_TEXT
+    ws['A8'].font = Font(bold=True, size=12)
+    ws['B8'] = str(db.xmlfile)
+    ws['B8'].number_format = openpyxl.styles.numbers.FORMAT_TEXT
+    ws['B8'].font = Font( size=12)
+    
+    ws['A9'] = "Inspector data source:"
+    ws['A9'].number_format = openpyxl.styles.numbers.FORMAT_TEXT
+    ws['A9'].font = Font(bold=True, size=12)
+    ws['B9'] = str(db.relnotefile)
+    ws['B9'].number_format = openpyxl.styles.numbers.FORMAT_TEXT
+    ws['B9'].font = Font(size=12)
+    
+    
+    ws['A10'] = "Compiler:"
+    ws['A10'].number_format = openpyxl.styles.numbers.FORMAT_TEXT
+    ws['A10'].font = Font(bold=True, size=12)
+    ws['B10'] = db.compiler_version
+    ws['B10'].number_format = openpyxl.styles.numbers.FORMAT_TEXT
+    ws['B10'].font = Font(size=12)
+    
+    # extend width 
+    dims = {}
+    for row in ws.rows:
+        for cell in row:
+            if cell.value:
+                dims[cell.column_letter] = max((dims.get(cell.column_letter, 0), len(str(cell.value))))    
+    for col, value in dims.items():
+        ws.column_dimensions[col].width = value
+    
+    
+    
+    _addOneSheet(wb, db, log_db, Formatmode.COMPACT, verbose)
+    _addOneSheet(wb, db, log_db, Formatmode.NORMAL, verbose)
+    _addOneSheet(wb, db, log_db, Formatmode.EXTENDED, verbose)
+        
+    
+    if verbose:
+        print(f"INFO: Written to file '{output_file_name}'")
     
     wb.save(filename=output_file_name)
 

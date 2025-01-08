@@ -16,7 +16,7 @@ import export
 import export_xlsx
 import export_html
 
-VERSION_STR = "v2.0-beta4"
+VERSION_STR = "v2.1"
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -48,8 +48,8 @@ def parse_arguments() -> argparse.Namespace:
     parser.add_argument("--output-format", dest='output_format', type=str, default="xlsx", choices=['XLSX', 'xlsx'],
                         help="Generate output format (HTML not supported in this version) Default to '--output-format=xlsx'.")
 
-    parser.add_argument("--format-mode", dest='format_mode', type=str, default="normal", choices=['COMPRESSED', 'NORMAL', 'EXPANDED'],
-                        help="Set formatting mode, behaviour might not be available on all output formats (default: NORMAL)'.")
+    #parser.add_argument("--format-mode", dest='format_mode', type=str, default="normal", choices=['COMPACT', 'NORMAL', 'EXTENDED'],
+    #                    help="Set formatting mode, behaviour might not be available on all output formats (default: NORMAL)'.")
 
     parser.add_argument("-x", "--xmlfile", type=str, required=True,
                         help="Pass filename of issue portal xml export file.") 
@@ -110,16 +110,16 @@ def il_conv():
         
     if args.logfiles != None:
         for file in args.logfiles:
-            print("... parsing file ", file, " ...")
             log_db.parse_log_file( file)
 
-    fm = export.Formatmode[args.format_mode.upper()]
-    output_fn = args.output + '-' + str(fm)[str(fm).find('.')+1:] + '.' + args.output_format.lower()
+    #fm = export.Formatmode[args.format_mode.upper()]
+    #output_fn = args.output + '-' + str(fm)[str(fm).find('.')+1:] + '.' + args.output_format.lower()
+    output_fn = args.output + '.' + args.output_format.lower()
     
     if args.output_format == 'xlsx':                
-        export_xlsx.generateExcel(output_fn, db, log_db, fm,  args.verbose)
+        export_xlsx.generateExcel(output_fn, db, log_db, args.verbose)
     else:
-        export_html.generateHTML( output_fn, db, log_db, fm, args.verbose)
+        export_html.generateHTML( output_fn, db, log_db, args.verbose)
 
 if __name__ == "__main__":
     il_conv()
