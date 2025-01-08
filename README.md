@@ -9,7 +9,7 @@
 - Fix:      Usual typos, verbose output with muliple log files
 - Prepare:  Release v2.1 (skipping v2.0)
 - 
-# *New* Version: v2.0 (release skipped)
+# Version: v2.0 (release skipped)
 - Removed: Parsing of Issue Portal website - no internet access required to use
 - Added:   Importing issue information from user provided product specific XML file
 - Added:   Importing of Inspector information from user provided product specific release notes.
