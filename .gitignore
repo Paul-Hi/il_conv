@@ -6,9 +6,14 @@ il_conv.dist
 il_conv.onefile-build
 il_conv.cmd
 il_conv.spec
-id_conv.exe
+il_conv.exe
 
 *.xlsx
 *.html
 *.bak
+*.db
+
+testdata/issues_tasking_TCVX_v6*.xml
+testdata/readme_tricore_v6.*.html
+
 

@@ -1,57 +1,100 @@
-/* style for html */
+.c-file{ white-space: nowrap; overflow-wrap: nowrap; max-width:1px; width:6%; }
+.c-filepath{ overflow-wrap: anywhere; max-width:1px; width:10%;  }
+.c-detection{ white-space: nowrap; overflow-wrap: nowrap; }
+.c-issueid { white-space: nowrap; overflow-wrap: nowrap;  }
+.c-sil { white-space: nowrap; overflow-wrap: nowrap; }
+.c-fixedversion { white-space: nowrap; overflow-wrap: nowrap; }
+.c-summary{ white-space: nowrap; overflow-wrap: nowrap; overflow: hidden;text-overflow:ellipsis; max-width:1px; width:16%; }
+.c-desc{ white-space: nowrap; overflow-wrap: nowrap;  overflow: hidden;text-overflow:ellipsis; max-width:1px; width:20%; }
+.c-mitigation{ white-space: nowrap; overflow-wrap: nowrap;  overflow: hidden; text-overflow:ellipsis; max-width:1px; width:20%; }
 
-body {
+.c-ellipsis { white-space: nowrap; overflow: hidden; text-overflow:ellipsis; }
+
+.c-ws-pre { white-space: pre; overflow-wrap: pre;}
+.c-nowrap {white-space: nowrap; overflow-wrap: nowrap;  }
+.c-ws-wrap { white-space: normal; overflow-wrap: break-word; word-wrap: break-word;}
+
+.log-table div {
+    width: 100%;
+}
+
+
+.log-table table {
+    table-layout: auto;
+    width: 125%;
     font-family: Arial, Helvetica, sans-serif;
-    background-color: white;
-}
-
-th {
-    background-color: #115FAB;
-    color: whitesmoke;
-    cursor: pointer;
-}
-
-tr:nth-child(even) {
-    background-color: lightgray;
-}
-
-table {
+    background-color: white;    
     border-collapse: collapse;
-    overflow-x: auto;
+    border: 3px, solid black;
 }
 
-th,
-td {
-    padding-left: 15px;
-    padding-right: 15px;
-    padding-top: 5px;
-    padding-bottom: 5px;
-}
-
-td {
-    text-align: left;
-}
-
-tr:hover {
+.log-table th :hover {
     background-color: darkgray;
 }
 
-th>i {
-    font-size: 20px;
-    padding: 0 10px;
+.log-table th  {
+    background-color: #115FAB;
+    font-size: 14px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    font-weight: 400;
+    border-collapse: collapse;
+    color: whitesmoke;
+    cursor: pointer;
+    padding: 5px;
+    margin: 10px;
 }
 
-th>i.fa {
+.log-table th>i {
+    font-size: 12px;
+    padding: 0 3px;
+}
+
+.log-table th>i.fa {
     display: none;
 }
 
-th.desc>i.fa-caret-up {
+.log-table th.desc>i.fa-caret-up {
     display: inline-block;
 }
 
-th.asc>i.fa-caret-down {
+.log-table th.asc>i.fa-caret-down {
     display: inline-block;
 }
+
+.log-table tbody>tr {
+    font-size: 11px;
+    height: 4em;
+}
+
+.log-table tbody>tr>td {
+    vertical-align: top;
+    text-align: left;
+   /* padding: 5px; */
+    border: 1px, solid black;
+}
+
+.log-table tbody>tr>td:hover {
+    overflow: visible;
+    white-space: pre-wrap;
+    position: relative;
+    background-color: red;
+}
+
+.log-table tbody>tr>td:hover::after {
+    content: attr(fulltext);
+    background-color: goldenrod;
+    border: 2px solid black;
+    padding: 8px;
+    white-space: pre-wrap;
+    z-index: 1;
+    position: absolute;
+    top: calc(50% - 25px); 
+    left: calc(50% - 50px);
+    width: 200%;
+    word-wrap: break-word;
+}
+
 
 .draggable.dragging {
     background-color: #5686b6;
