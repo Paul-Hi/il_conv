@@ -14,7 +14,6 @@ import openpyxl
 import openpyxl.workbook
 from openpyxl.workbook import Workbook
 import openpyxl.worksheet
-from openpyxl.worksheet import worksheet as Worksheet
 
 import openpyxl.styles
 import openpyxl.worksheet.table as xltables
@@ -22,16 +21,11 @@ import openpyxl.worksheet.table as xltables
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.cell_range import CellRange
 from openpyxl.styles import Font, Alignment
-'''
-from openpyxl.worksheet import dimensions
-'''
 
 from resources import LOGO_PNG
 
-from issuedb import IssueDB, ReleaseNoteIssue, PortalIssue, Issue
-
-from parse import LogDB, _DETECTION_RECORD_INFO, Detection
-
+from issuedb import IssueDB
+from parse import LogDB
 
 from export import Formatmode
 
@@ -39,8 +33,8 @@ from export import Formatmode
 def _addOneSheet( wb : Workbook, db: IssueDB, log_db: LogDB, fm : Formatmode, verbose: bool = False):
 
     # dict of filename to filepath mapping
-    Hide = False;
-    Visible = True;
+    Hide = False
+    Visible = True
     fn2fp = {}
     worksheet_name = None
     ws = None # Worksheet
@@ -70,7 +64,7 @@ def _addOneSheet( wb : Workbook, db: IssueDB, log_db: LogDB, fm : Formatmode, ve
     
         for (fn, fp, id, lines, detections) in curs:
         
-            if fn2fp.get(fn) != None:
+            if fn2fp.get(fn) is not None:
                 (count, existing_fp) = fn2fp[fn]
                 if existing_fp != fp:
                     print(f"WARN: Your project seems to have multiple times file '{fn}' in different folders, you should use expaned format and looking at the full pathname within the report.")
@@ -83,7 +77,7 @@ def _addOneSheet( wb : Workbook, db: IssueDB, log_db: LogDB, fm : Formatmode, ve
             #print (row)
             ii = db.getIssue( id )
 
-            assert ii != None,  f"ERROR: Log includes detected issue id '{id}' in file '{fp}'but we have no information about it."
+            assert ii is not None,  f"ERROR: Log includes detected issue id '{id}' in file '{fp}'but we have no information about it."
         
             detections = detections.replace("potential affected", "p")
             detections = detections.replace("affected", "d")
@@ -120,7 +114,7 @@ def _addOneSheet( wb : Workbook, db: IssueDB, log_db: LogDB, fm : Formatmode, ve
     
         for (fn, fp, id, line, column, detection) in curs:
 
-            if fn2fp.get(fn) != None:
+            if fn2fp.get(fn) is not None:
                 (count, existing_fp) = fn2fp[fn]
                 if existing_fp != fp:
                     print(f"WARN: Your project seems to have multiple times file '{fn}' in different folders, you should use expaned format and looking at the full pathname within the report.")
@@ -131,7 +125,7 @@ def _addOneSheet( wb : Workbook, db: IssueDB, log_db: LogDB, fm : Formatmode, ve
             
             ii = db.getIssue( id )
 
-            assert ii != None,  f'ERRRO: Log includes detected issue id but we have no information about it.\n{id} {fp} line'
+            assert ii is not None,  f'ERRRO: Log includes detected issue id but we have no information about it.\n{id} {fp} line'
         
             detection = detection.replace("potential affected", "p")
             detection = detection.replace("affected", "d")
@@ -167,7 +161,7 @@ def _addOneSheet( wb : Workbook, db: IssueDB, log_db: LogDB, fm : Formatmode, ve
         curs = log_db.conn.execute( "select file, filepath, issueid, line, column, detectiontype FROM Logs ORDER By file, issueid, line")
     
         for (fn, fp, id, line, column, detection) in curs:
-            if fn2fp.get(fn) != None:
+            if fn2fp.get(fn) is not None:
                 (count, existing_fp) = fn2fp[fn]
                 if existing_fp != fp:
                     print(f"WARN: Your project seems to have multiple times file '{fn}' in different folders, you should use expaned format and looking at the full pathname within the report.")
@@ -178,7 +172,7 @@ def _addOneSheet( wb : Workbook, db: IssueDB, log_db: LogDB, fm : Formatmode, ve
             
             ii = db.getIssue( id )
 
-            assert ii != None,  f'ERRRO: Log includes detected issue id but we have no information about it.\n{id} {fp} line'
+            assert ii is not None,  f'ERRRO: Log includes detected issue id but we have no information about it.\n{id} {fp} line'
         
             detection = detection.replace("potential affected", "p")
             detection = detection.replace("affected", "d")
@@ -222,7 +216,6 @@ def _addOneSheet( wb : Workbook, db: IssueDB, log_db: LogDB, fm : Formatmode, ve
             cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
             if "file" in type_str:
                 try:
-                    ii = db.getIssue(id)
                     (count, fp) = fn2fp[cell.value]
                     if count > 1 and fm == Formatmode.COMPRESSED :
                         cell.comment = openpyxl.comments.Comment(
@@ -246,8 +239,11 @@ def _addOneSheet( wb : Workbook, db: IssueDB, log_db: LogDB, fm : Formatmode, ve
             elif "hyper" in type_str:
                 try:
                     cell.style = 'Hyperlink'
-                    ii = db.getIssue(id)
-                    cell.comment = openpyxl.comments.Comment('MITIGATION:\n{}'.format(ii.mitigation), "generated", 400,520)
+                    
+                    id = str(cell.value)# .split('-')[-1] 
+                    if id.startswith("TCVX-") or id.startswith("SMRT-"):
+                        ii = db.getIssue(id)
+                        cell.comment = openpyxl.comments.Comment('MITIGATION:\n{}'.format(ii.mitigation), "generated", 400,520)
                     cell.hyperlink = 'https://issues.tasking.com/?issueid={}'.format(cell.value)
                 except:
                     pass

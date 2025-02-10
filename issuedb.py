@@ -7,9 +7,9 @@ Apache License 2.0
 """
 
 
-import sys
+#import sys
 #assert sys.version_info.major == 3 and sys.version_info.minor in (10, 11), "ERROR: script works only with Python 3.10 or 3.11"
-import os
+#import os
 
 
 from pathlib import Path
@@ -101,7 +101,7 @@ class IssueDB(object):
         cols[0] = "{} TEXT PRIMARY KEY".format(ReleaseNoteIssue._fields[0])
         line  = ','.join(cols)
         cols = line
-        self.cur.execute("DROP TABLE IF EXISTS ReleaseNoteIssues");
+        self.cur.execute("DROP TABLE IF EXISTS ReleaseNoteIssues")
         create = "CREATE TABLE IF NOT EXISTS ReleaseNoteIssues (" + cols + ")"                
         self.cur.execute(create)
         
@@ -112,7 +112,7 @@ class IssueDB(object):
         cols[0] = "{} TEXT PRIMARY KEY".format(ReleaseNoteIssue._fields[0])
         line  = ','.join(cols)
         cols = line
-        self.cur.execute("DROP TABLE IF EXISTS PortalIssues");
+        self.cur.execute("DROP TABLE IF EXISTS PortalIssues")
         create = "CREATE TABLE IF NOT EXISTS PortalIssues (" + cols + ")"                
         self.cur.execute(create)
         self.conn.commit()
@@ -153,7 +153,7 @@ class IssueDB(object):
     
         input = ''
 
-        if self.relnotefile != None:
+        if self.relnotefile is not None:
             if self.verbose:
                 print("INFO: Read issue information from release note '" + str(self.relnotefile)+ "'")
             with open(self.relnotefile) as fp:
@@ -195,7 +195,7 @@ class IssueDB(object):
 
         for row in trows:
             td = row.find("td")
-            url = td.a['href']
+            #url = td.a['href']
             id = td.get_text(strip=True)
 
             td = td.find_next_sibling()
@@ -241,7 +241,7 @@ class IssueDB(object):
         
         input = ''
 
-        if self.xmlfile != None:
+        if self.xmlfile is not None:
             if self.verbose:
                 print("INFO: Read issue portal XML file passed '"+ str(self.xmlfile) + "'")
             with open(self.xmlfile, encoding='utf-8') as fp:
@@ -262,16 +262,16 @@ class IssueDB(object):
         assert self.compiler_version == pvv, err
         
         all_issues = soup.find_all('issue')
-        number_of_issues = len(all_issues)
+        #number_of_issues = len(all_issues)
 
         for index, issue in enumerate(all_issues):
             id = issue.find('id').get_text(strip=True)
             summary = issue.find('summary').get_text(strip=True)
         
-            component = ",".join([l.get_text(strip=True) for l in issue.find_all(
+            component = ",".join([co.get_text(strip=True) for co in issue.find_all(
                 'component')])
 
-            affected_toolchain = ",".join([l.get_text(strip=True) for l in issue.find_all(
+            affected_toolchain = ",".join([af.get_text(strip=True) for af in issue.find_all(
                 'affected_toolchain')])
             if len(affected_toolchain) == 0:
                 affected_toolchain = ''
@@ -290,19 +290,19 @@ class IssueDB(object):
             if len(mitigation) == 0:
                 mitigation = ''
 
-            affected_version = ','.join([l.get_text(strip=True) for l in issue.find_all(
+            affected_version = ','.join([av.get_text(strip=True) for av in issue.find_all(
                                     'affected_version')])    
             if len(affected_version)== 0:
                 affected_version = ''
 
-            fix_version = ','.join([l.get_text(strip=True) for l in issue.find_all(
+            fix_version = ','.join([fv.get_text(strip=True) for fv in issue.find_all(
                                     'fix_version')])    
             if len(fix_version) == 0:
                 fix_version = ''
 
             description = issue.find('description').get_text(strip=True)
 
-            inspector_version = ','.join([l.get_text(strip=True) for l in issue.find_all(
+            inspector_version = ','.join([iv.get_text(strip=True) for iv in issue.find_all(
                 'inspector')])
 
             if len(inspector_version) == 0:

@@ -9,14 +9,13 @@ Apache License 2.0
 
 import argparse
 from pathlib import Path
+
+import export_html
+import export_xlsx
 from issuedb import IssueDB
 from parse import LogDB
 
-import export
-import export_xlsx
-import export_html
-
-VERSION_STR = "v2.1"
+VERSION_STR = "v2.2"
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -82,9 +81,9 @@ def il_conv():
     assert compiler_version.startswith("v6.2r2") or compiler_version.startswith("v6.3r1"), "ERROR: Passed release note file name compiler '{}' doesn't match 'v6.2r2' or 'v6.3r1'".format(relnote)
     compiler_version = compiler_version[ : len('v6.3r1') ]
 
-    sidx = stem.rfind("v1.0r")
-    assert sidx != -1 and sidx >= len("readme_tricore_v6.3r1_inspector" ) -1, "ERROR:"
-    inspector_version = stem[ sidx : ]
+    #sidx = stem.rfind("v1.0r")
+    #assert sidx != -1 and sidx >= len("readme_tricore_v6.3r1_inspector" ) -1, "ERROR:"
+    inspector_version = "v1.0"#stem[ sidx : ]
 
 
     xmlfile = Path(args.xmlfile)
@@ -108,7 +107,7 @@ def il_conv():
     
     log_db = LogDB(args.verbose)
         
-    if args.logfiles != None:
+    if args.logfiles is not None:
         for file in args.logfiles:
             log_db.parse_log_file( file)
 

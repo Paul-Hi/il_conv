@@ -7,9 +7,7 @@ Apache License 2.0
 
 '''
 
-from issuedb import IssueDB, ReleaseNoteIssue, PortalIssue, Issue
 
-from parse import LogDB, _DETECTION_RECORD_INFO, Detection
 
 
 from enum import Enum

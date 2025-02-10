@@ -10,7 +10,8 @@ Apache License 2.0
 
 from html import escape as pyhtml_escape
 
-from export import Formatmode, LogDB, IssueDB
+from issuedb import IssueDB
+from parse import LogDB
 
 from resources import LOGO_BASE64_TXT, DEFAULT_CSS, FUNCTIONS_JS
 
@@ -67,7 +68,7 @@ def generateHTML(output_file_name: str, db: IssueDB, log_db:LogDB, verbose: bool
     tr_tds_rows = ''
     for (fn, fp, id, line, column, detection) in curs:
         ii = db.getIssue( id )
-        assert ii != None,  f'ERRRO: Log includes detected issue id but we have no information about it.\n{id} {fp} line'
+        assert ii is not None,  f'ERRRO: Log includes detected issue id but we have no information about it.\n{id} {fp} line'
         detection = detection.replace("potential affected", "p")
         detection = detection.replace("affected", "d")
         raw = map( lambda x: pyhtml_escape(x), [
