@@ -4,8 +4,9 @@
 
 # *New* Version: v2.3
 - Fix:      #10 Correct mitigation when hovered over TCVX-keys
-- Add:      #7 Resolved / check column added
-*NOTE: The resolved / check column is not preserved during runs.* Might be a feature in future.
+- Add:      #7 Resolved / check column added\  
+**NOTE: The resolved / check column is not preserved during runs.**\
+Might be a feature in future.
 
 # Version: v2.2 (release skipped)
 - Fix:      #8 - relaxed naming of release notes
