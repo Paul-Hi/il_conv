@@ -1,6 +1,7 @@
 <p>
   <img src="res/logo.png" width="20%">
 </p>
+
 # *New* Version: v2.3
 - Fix:      #10 Correct mitigation when hovered over TCVX-keys
 - Add:      #7 Resolved / check column added
