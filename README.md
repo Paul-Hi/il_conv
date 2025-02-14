@@ -1,8 +1,16 @@
 <p>
   <img src="res/logo.png" width="20%">
 </p>
+# *New* Version: v2.3
+- Fix:      #10 Correct mitigation when hovered over TCVX-keys
+- Add:      #7 Resolved / check column added
+*NOTE: The resolved / check column is not preserved during runs.* Might be a feature in future.
 
-# *New* Version: v2.1 
+# Version: v2.2 (release skipped)
+- Fix:      #8 - relaxed naming of release notes
+- Fix:      Wrong warnings
+
+# Version: v2.1 
 - Add:      Excel overview sheet
 - Modified: Excel export now generate all variants into one workbook
 - Modified: Remove formatting mode from cmdline options to simplify
