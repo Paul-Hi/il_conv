@@ -97,3 +97,7 @@ This script is as is, no notion of completeness or that it works under all circu
   
 
 
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2FPaul-Hi%2Fil_conv.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2FPaul-Hi%2Fil_conv?ref=badge_large)
