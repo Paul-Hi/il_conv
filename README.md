@@ -4,46 +4,47 @@
 
 # *New* Version: v2.3
 - Fix:      #10 Correct mitigation when hovered over TCVX-keys
-- Add:      #7 Resolved / check column added\  
-**NOTE: The resolved / check column is not preserved during runs.**\
+- Add:      #7 Resolved / check column added
+  
+**NOTE: The resolved / check column is not preserved during runs.**  
 Might be a feature in future.
 
-# Version: v2.2 (release skipped)
-- Fix:      #8 - relaxed naming of release notes
-- Fix:      Wrong warnings
+**[Release list](RELEASES.md)**
 
-# Version: v2.1 
-- Add:      Excel overview sheet
-- Modified: Excel export now generate all variants into one workbook
-- Modified: Remove formatting mode from cmdline options to simplify
-- Fix:      Usual typos, verbose output with muliple log files
-- Prepare:  Release v2.1 (skipping v2.0)
-- 
-# Version: v2.0 (release skipped)
-- Removed: Parsing of Issue Portal website - no internet access required to use
-- Added:   Importing issue information from user provided product specific XML file
-- Added:   Importing of Inspector information from user provided product specific release notes.
-- Modified: Replaced outdated python packages by Python core modules to support Python 3.13
-- Modified: Command line options. NOTE: v2.0 is not compatible with past version on output and on CLI interface!
-- Modified: Provide 3 different formatting options for XLSX output (compressed, normal, expanded)
-- Tested:   Assure compatiblity with current issue portal and XML export format as well Inspector log output.
+# **il_conv** (**I**nspector **L**og **conv**erter)
+A small tool to generate Excel  report (xlsx file) enriched with all known issue information incl. direct links to latest information about each known issue from TASKING's issue portal.  
+Please adapt the output to whatever format you need for your errata management approach you follow at your company. If you like you can propose new formats (issue and/or pull request) to our project and we are happy to integrate them.
 
-
+## Pre-requisites
+The tool requires certain input files to generate the a meaningfull report.  
+You need
+1. To be a user of a TASKING compiler with a valid license.
+2. To be a user of the TASKING TriCore Inspector with a valid license.
+3. To have login access to TASKING issue portal for the respective TASKING compiler version,
+   - To export XML data file manually (Button: XML Export)  
+     or
+   - To frequently download the XML data file automatically, e.g. on Windows with
+   > \> wget --save-cookies cookies.txt --keep-session-cookies --post-data "login_username=**ABCD@youraccount.com**&secretkey=**PASSWORD**" -O NUL "https://issues.tasking.com/cust_redirect.php"
+     \>  
+     \> wget --load-cookies cookies.txt --content-disposition "https://issues.tasking.com/?project=TCVX&version=v6.3r1&o=xml"  
+     \> wget --load-cookies cookies.txt --content-disposition "https://issues.tasking.com/?project=TCVX&version=v6.2r2&o=xml"  
+4. The release notes of your used TASKING Inspector version (e.g. 'readme_tricore_v6.3r1_inspector_v1.0r7.html').  
+   You can find that in TASKING website or on the installation tree of the TASKING Inspector product.
+5. To integrated and execute the TASKING Inspector 'compiler' within your build environment. During execution you have to gathered detection warnings from the analysis of your source code.  
+   **Tip:** Option '--inspector-log=<absolute-filename>' passed to the Inspector compiler toolchain helps you to gather all relevant output in one file.
+   
 ## Background:
-TASKING Inspector products are modified TASKING C/C++ compiler. Inspector helps compiler users to evaluate if they might be impacted by a know issue of the compiler and to decided how to mitigate the issue.
-Mitigation examples:
-- Use a newer compiler version or latested patch
-- Change command line option
-- Rewriting source code
+TASKING Inspector products are modified TASKING C/C++ compiler. Inspector helps a compiler user to evaluate if he might be impacted by a know issue of the compiler and to decided if and how to mitigate the issue. Generally such an impact analyise takes place in all safety related system & software development to be confident that system/software already release or where a update is in-development can't lead to a a safety critical malfunction for the (end)-user.
+
+Examples of a mitigation when potential issue is detect:
+- Use a newer compiler version or latested patch version which most probably already have the detected issue fixed.
+- Change command line option or enable / disable specific compiler option functionlity local to a function or file.
+- Change / Modify source code to avoid triggering the known issue.
+- Proof that potential malfunction of application area is acceptable, e.g. can't lead to a safety critical malfunction  
 ...
 
-### How does work?
+### How does it work?
 TASKING customer run the Inspector 'compiler' like the normal compiler from TASKING and get an enriched log output which shows the location (issue detected, filename, line, column).
-
-## **il_conv** (**I**nspector **L**og **conv**erter)
-A small tool to generate XLSX files (for Excel) enriched with all known issue information incl. direct links to latest information about each known issue on TASKINGs issue portal.
-
-HTML output is prepared but design of the output is currently under evaluation and disabled in the new version.
 
 ## Example usage:
 ```
@@ -51,6 +52,11 @@ $ il_conv -?
 ...
 $ il_conv -v -x issues_tasking_TCVX_v6.3r1.xml -r readme_tricore_v6.3r1_inspector_v1.0r6.html logfile.txt
 ```
+Note:  
+- 'issues_tasking_TCVX_v6.3r1.xml               == XML export from the issue portal
+- 'readme_tricore_v6.3r1_inspector_v1.0r7.html' == Release note for your Inspector version
+- logfile.txt                                   == one or several file which have inspector detection messages gathered for you build.
+
 ## Features:
 - [x] Command line tool
 - [x] Can use all published information from TASKING issue portal (XML export to be done by user)
@@ -65,8 +71,6 @@ $ il_conv -v -x issues_tasking_TCVX_v6.3r1.xml -r readme_tricore_v6.3r1_inspecto
 - [x] Binary release possible (one file executable script) without own python installation
 - [x] Click-through from XLSX Issue ID  
 
-## Open
-[ ] Allow click-through from HTML ~~and XLSX~~ to Ticket details
 
 ## Dependencies (pip -r requirements.txt)
 - Python 3.10 or later
@@ -90,10 +94,6 @@ Be aware that nuitka builds depends on a bunch of addtional things to be install
 
 Paul & Peter
 
-  
-Note: 
+**Note:** 
 This script is as is, no notion of completeness or that it works under all circumstances ...
 ### We'll get not payed for that work it's just for fun, so please be polite.
-  
-
-
