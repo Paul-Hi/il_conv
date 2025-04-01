@@ -71,6 +71,20 @@ Note:
 - [x] Binary release possible (one file executable script) without own python installation
 - [x] Click-through from XLSX Issue ID  
 
+## Limitation: 
+Note:
+ - There might be several 'doublicate' detections (same filename, same column and line) or (same filename butdifferent file system access paths, same column and line).
+ - **il_conv** tool tries to warn you about that fact and ask you to look more deep into your source structure that you do not require to analyse detections to many times.
+ > WARN: Your project seems to have multiple times file 'Os_Timer.h' in different folders, you should use expanded format and looking at the full pathname within the report
+ This is oftent detected when you include header files via relative different files path from the view of the compile unit. 
+  
+ - The resulting Excel reports therefor might include 
+   - **Compact report** - doublicate number for the same file / row
+   - **Normal, Extended** - doublicate detection in different rows
+   
+## Know bugs: 
+- none :-)
+  It's a pretty simple script, hack it yourself or create a nice feature / bug ticket for us and we might have a look :-d
 
 ## Dependencies (pip -r requirements.txt)
 - Python 3.10 or later
@@ -87,10 +101,6 @@ In case you wanna build the scripts into a onefile executabe
 
 Be aware that nuitka builds depends on a bunch of addtional things to be installed in addtion (e.g. gcc compiler) on the build machine
 --> much easier is using the provided exe file from our release page
-
-## Know bugs: 
-- none :-)
-  It's a pretty simple script, hack it yourself or create a nice feature / bug ticket for us and we might have a look :-d
 
 Paul & Peter
 
