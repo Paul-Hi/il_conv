@@ -87,6 +87,8 @@ Note:
   It's a pretty simple script, hack it yourself or create a nice feature / bug ticket for us and we might have a look :-d
 
 ## Dependencies (pip -r requirements.txt)
+In case you wanna *use* the python scripts, you have to at least install python and the for dependencies.
+
 - Python 3.10 or later
 - openpyxl
 - Pillow
