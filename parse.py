@@ -213,7 +213,9 @@ class LogDB(object):
 
             # "message row"
             # I991: [INSP] No definite or potential issues detected for the enabled list of
-            pat = r"(.*)(I991):\s\[INSP\]\s(.*)"
+            # insp_ltc seems to use a different number for it :-/
+            # I993: [INSP] No definite or potential issues detected for the enabled list of
+            pat = r"(.*)(I991|I993):\s\[INSP\]\s(.*)"
 
             matchObj = re.match(pat, li)
             if matchObj:
