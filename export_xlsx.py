@@ -13,21 +13,55 @@ from datetime import datetime
 import openpyxl
 import openpyxl.workbook
 from openpyxl.workbook import Workbook
-import openpyxl.worksheet
+from openpyxl.worksheet.worksheet import Worksheet
+
 
 import openpyxl.styles
 import openpyxl.worksheet.table as xltables
 
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.cell_range import CellRange
+from openpyxl.cell import Cell
 from openpyxl.styles import Font, Alignment
 
-from resources import LOGO_PNG
 
+from resources import LOGO_PNG
 from issuedb import IssueDB
 from parse import LogDB
 
 from export import Formatmode
+
+def _map_dtype_2_auto_judgement(d : str ):
+    '''
+        d/p: detection type encodes up to for information seperated by ';'
+             d or p for "definite occureance" or "potential occureance"
+        n/c: assembly comparison results
+             n or c for "no change in assembly comparison" and "change in assembly comparison"    
+    '''
+    # t, a, dir, f1, f2 
+    l1 = ([ s.strip() for s in d.split(";")] + ["'?'"]*5)[:5]
+    
+    t, a, dir, f1, f2  = l1
+    
+    auto_judge = {
+        ('p', '-'): "Potential. Further manual investigation required.",
+        ('p', 'n'): "Potential. Most likely a false positive, ignore.",
+        ('p', 'c'): f"Potential. Further manual investigation required. Assembly files '{f1}', '{f2}' generated  in '{dir}'.",
+        ('d', '-'): "Definite. Most likely impacted. Check if mitigation is applied.",
+        ('d', 'n'): "Definite. Unclear definite detection. Executed assembly comparison haven't shown a change ?? Reach out to vendor support-",
+        ('d', 'c'): f"Definite. Most likely impacted. Assembly files '{f1}', '{f2}' generated in '{dir}'. Check if mitigation is applied.",
+    }
+   
+    # Default result
+    res : str = "?!?"
+    
+    # Use the tuple (t, a) as a key to fetch the appropriate message
+    res = auto_judge.get((t, a), res)
+    
+    return res
+    
+
+
 
 
 def _addOneSheet(
@@ -38,8 +72,9 @@ def _addOneSheet(
     Hide = False
     Visible = True
     fn2fp = {}
+    detection : str
     worksheet_name = None
-    ws = None  # Worksheet
+    ws: Worksheet = None  # Worksheet
 
     if fm == Formatmode.COMPACT:
         worksheet_name = "Report compact"
@@ -57,13 +92,8 @@ def _addOneSheet(
             ("Description", "string", False, Hide, 60),
             ("Mitigation", "string", False, Hide, 60),
             ("Lines", "string", True, Visible, -1),
-            (
-                "Detection type for each line in lines ('d' or 'p')",
-                "string",
-                True,
-                Hide,
-                -1,
-            ),
+            ("Auto judgement", "string", True, Visible, -1),
+
         ]
         headings = [f for (f, _, _, _, _) in col_style]
         # Add headings
@@ -73,7 +103,7 @@ def _addOneSheet(
             "select file, filepath, issueid, group_concat(line), group_concat(detectiontype) FROM Logs GROUP By filepath, issueid ORDER BY file, issueid"
         )
 
-        for fn, fp, id, lines, detections in curs:
+        for fn, fp, id, lines, detection in curs:
 
             if fn2fp.get(fn) is not None:
                 (count, existing_fp) = fn2fp[fn]
@@ -91,10 +121,10 @@ def _addOneSheet(
 
             assert (
                 ii is not None
-            ), f"ERROR: Log includes detected issue id '{id}' in file '{fp}'but we have no information about it."
+            ), f"ERROR: Log includes detected issue id '{id}' in file '{fp}' \
+                 but we have no information about it. Are you a current issue portal XML export and Inspector release note?"
 
-            detections = detections.replace("potential affected", "p")
-            detections = detections.replace("affected", "d")
+            auto_judgement = _map_dtype_2_auto_judgement(detection)
 
             csvrow = [
                 fn,
@@ -107,8 +137,8 @@ def _addOneSheet(
                 ii.description,
                 ii.mitigation,
                 lines,
-                detections,
-            ]
+                auto_judgement,
+                ]
 
             ws.append(csvrow)
 
@@ -129,7 +159,7 @@ def _addOneSheet(
             ("Mitigation", "string", False, Hide, 60),
             ("Line", "int", True, Visible, -1),
             ("Column", "int", True, Visible, -1),
-            ("Detection type for line ('d' or 'p')", "string", True, Hide, -1),
+            ("Auto judgement", "string", True, Visible, -1),
             ("Resolved/Checked", "string", True, Visible, -1),
         ]
         headings = [f for (f, _, _, _, _) in col_style]
@@ -160,9 +190,8 @@ def _addOneSheet(
                 ii is not None
             ), f"ERRRO: Log includes detected issue id but we have no information about it.\n{id} {fp} line"
 
-            detection = detection.replace("potential affected", "p")
-            detection = detection.replace("affected", "d")
-
+            auto_judgement = _map_dtype_2_auto_judgement(detection)
+             
             csvrow = [
                 fn,
                 fp,
@@ -175,7 +204,7 @@ def _addOneSheet(
                 ii.mitigation,
                 line,
                 column,
-                detection,
+                auto_judgement,
                 "not checked",
             ]
 
@@ -185,7 +214,7 @@ def _addOneSheet(
         worksheet_name = "Report extended"
         ws = wb.create_sheet(worksheet_name)
 
-        # (fieldname, type, Autofit, visible, , autofit max chars)
+        # (fieldname, type, Autofit, visible, autofit max chars)
         col_style = [
             ("File Name", "file", False, Visible, -1),
             ("File Path", "string", True, Visible, 40),
@@ -198,7 +227,7 @@ def _addOneSheet(
             ("Mitigation", "string", False, Visible, 70),
             ("Line", "int", True, Visible, -1),
             ("Column", "int", True, Visible, -1),
-            ("Detection type for line ('d' or 'p')", "string", True, Hide, -1),
+            ("Auto judgement", "string", True, Visible, -1),
             ("Resolved/Checked", "string", True, Visible, -1),
         ]
         headings = [f for (f, _, _, _, _) in col_style]
@@ -228,8 +257,7 @@ def _addOneSheet(
                 ii is not None
             ), f"ERRRO: Log includes detected issue id but we have no information about it.\n{id} {fp} line"
 
-            detection = detection.replace("potential affected", "p")
-            detection = detection.replace("affected", "d")
+            auto_judgement = _map_dtype_2_auto_judgement(detection)
 
             csvrow = [
                 fn,
@@ -243,7 +271,7 @@ def _addOneSheet(
                 ii.mitigation,
                 line,
                 column,
-                detection,
+                auto_judgement,
                 "not checked",
             ]
 
@@ -267,23 +295,32 @@ def _addOneSheet(
         #        ws.column_dimensions[column_letter].hidden = not visible
         dim_holder[column_letter].width = min(100, (pro_chars + 2) * 1.23)
 
-    # we know the table starts at column A, so we can use the types
+    # Add one addtional row which will hold our logo and title :-)
+    ws.insert_rows(1)
+    
+    # Future table starts at column A
     dim_holder = ws.column_dimensions
     fieldname, types, autofits, visiblities, maxchars = list(zip(*col_style))
+    
+    # Iterate through all columns (col_style)
     for i in range(0, len(types)):
         type_str = types[i]
-        column_letter = get_column_letter(i + 1)
+        column_letter = get_column_letter(i + 1)  # i+1 as Excel columns start with A = 1)
 
         dim_holder[column_letter].hidden = not visiblities[i]
 
-        for cell in ws[column_letter][1:]:
-
+        # iterate all cells with the current referenced column row 3 ... to max
+        for cell in ws[column_letter][2:]:    # skip our title row (row 1) and our future table header row (row 2)
+        
             cell.alignment = Alignment(wrap_text=autofits[i])
-
             cell.number_format = openpyxl.styles.numbers.FORMAT_TEXT
+        
+            # check for special extra markup for the cell based on our specification col_style
             if "file" in type_str:
                 try:
                     (count, fp) = fn2fp[cell.value]
+                    
+                    # cross-check: filename <-> fullpath mapping and if there are multiplte filenames in the project in different paths
                     if count > 1 and fm == Formatmode.COMPRESSED:
                         cell.comment = openpyxl.comments.Comment(
                             "HINT: File name '{}' is not unique within your project - the compressed formatting report might wrongly mix multiple occurances!!\n{}".format(
@@ -295,8 +332,10 @@ def _addOneSheet(
                         )
                 except:
                     pass
+                
             elif "datetime" in type_str:
                 try:
+                    # type str here assumes "datetime;FORMATSTRING"
                     cell.value = datetime.strptime(cell.value, type_str.split(";")[-1])
                 except:
                     pass
@@ -305,11 +344,21 @@ def _addOneSheet(
             elif "int" in type_str:
                 try:
                     cell.value = int(cell.value)
+                    cell.number_format = openpyxl.styles.numbers.FORMAT_NUMBER
                 except:
                     pass
-                cell.number_format = openpyxl.styles.numbers.FORMAT_NUMBER
+                
             elif "hyper" in type_str:
                 try:
+                    ##
+                    ## NOTE: A more reliable approach might be to convert the value into formulat
+                    ##       "=HYPERLINK(....)" but did not check that
+                    ##
+                    ## current apporach is to use the cell styling, but looks that the library or excel has a bug
+                    ## After styling no ws changes like insert/remove a row is allowed as otherwise hyperlink is attached
+                    ## to the wrong cell after loading in EXCEL. OMG - GRRRRR 
+                    ##
+                    
                     cell.style = "Hyperlink"
 
                     id = str(cell.value)  # .split('-')[-1]
@@ -321,25 +370,19 @@ def _addOneSheet(
                             400,
                             520,
                         )
-                    cell.hyperlink = "https://issues.tasking.com/?issueid={}".format(
-                        cell.value
-                    )
+                        uri = f"https://issues.tasking.com/?issueid={id}"
+                        cell.hyperlink = uri
                 except:
                     pass
-
-    cell_range = CellRange(
-        min_col=1, min_row=2, max_col=ws.max_column, max_row=ws.max_row + 1
-    )
+    
+    # define the table at A2 
+    cell_range = CellRange( min_col=1, min_row=2, max_col=ws.max_column, max_row=ws.max_row )
 
     table_name = "Data_" + str(fm)[str(fm).find(".") + 1 :]
     tab = xltables.Table(displayName=table_name, ref=str(cell_range))
-    style = xltables.TableStyleInfo(name="TableStyleLight9")
-
-    tab.tableStyleInfo = style
-
+    tab.tableStyleInfo = xltables.TableStyleInfo(name="TableStyleLight9")
     ws.add_table(tab)
 
-    ws.insert_rows(1)
 
     img = openpyxl.drawing.image.Image(LOGO_PNG)
     img.anchor = "A1"
