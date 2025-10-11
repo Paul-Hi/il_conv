@@ -2,11 +2,12 @@
   <img src="res/logo.png" width="20%">
 </p>
 
-# *New* Version: v2.3
-- Fix:      #10 Correct mitigation when hovered over TCVX-keys
-- Add:      #7 Resolved / check column added
-  
-**NOTE: The resolved / check column is not preserved during runs.**  
+# *New* Version: v3.0 beta
+- Fix:      #12 Hyperlinks might not target the correct issue URL
+- Add:      Support for upcoming automated execution of assembly files generated with and without bug fix applied
+- Add:      Prepare for Inspector tools supporting different compiler version
+- Modified: Update documentation, incl. now examples how to download XLM export files automated as TASKING customer.
+**NOTE: The resolved / check column is not preserved during runs.**\
 Might be a feature in future.
 
 **[Release list](RELEASES.md)**

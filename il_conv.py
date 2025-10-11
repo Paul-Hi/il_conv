@@ -15,7 +15,7 @@ import export_xlsx
 from issuedb import IssueDB
 from parse import LogDB
 
-VERSION_STR = "v2.3"
+VERSION_STR = "v3.0 beta"
 
 
 def parse_arguments() -> argparse.Namespace:

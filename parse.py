@@ -8,7 +8,8 @@ Apache License 2.0
 
 import re
 import os
-from pathlib import Path
+#from pathlib import Path
+import sqlite3
 
 
 from collections import namedtuple
@@ -23,7 +24,8 @@ _DETECTION_RECORD_INFO = [
     ("file", True, ""),  # idx
     ("line", True, ""),  # idx
     ("column", True, ""),  # idx
-    ("detectiontype", False, ""),
+    ("detectiontype", False, ""),  # str: (p | d ) ; ( c | n | - ) [; <file.affexted> ; <file.notaffected> ]
+                                   #  p = potential, d = definite, c = asm changed, n = no change, optional assembly files
     ("issueid", True, ""),  # idx
     ("extension", False, ""),
 ]
@@ -35,9 +37,6 @@ Detection = namedtuple(
     "Detection", DETECTION_RECORD, defaults=("", "", "", "", "", "", "", "", "", "")
 )
 """Data type to store release note information per issue"""
-
-
-import sqlite3
 
 
 class LogDB(object):
@@ -120,7 +119,7 @@ class LogDB(object):
         """
         lines = []
 
-        if file_name != None:
+        if file_name is not None:
             if self.verbose:
                 print("INFO: Read passed log file '" + str(file_name) + "'")
             with open(file_name) as fp:
@@ -163,9 +162,14 @@ class LogDB(object):
             # W998: [<"full filename>" <line>/<column>] [INSP] detected potential occurrence of issue <id>
             # W999: [<"full filename>" <line>/<column>] [INSP] detected occurrence of issue <id>
             #
-            #  gr2         gr3           gr4    gr5                   gr6                    gr7                gr8
+            # since TC v6.3r1 v1.0r8
+            # E980: [INSP] detected potential occurrence of issue <id> No change in assembly comparison detected. High confidence it is a false positive and therefore can be ignored.
+            # W981: [INSP] detected potential occurrence of issue <id> No change in assembly comparison detected. High confidence it is a false positive and therefore can be ignored.
+            # E982: [INSP] detected potential occurrence of issue <id> Detected difference in assembly comparison. Assembly files are stored in directory <directory> as: <nofixfile>; with fix: <withfixfile>
+            # W983: [INSP] detected potential occurrence of issue <id> Detected difference in assembly comparison. Assembly files are stored in directory <directory> as: <nofixfile>; with fix: <withfixfile>
+            # #  gr2         gr3           gr4    gr5                   gr6                    gr7                gr8
             #
-            pat = r'(.*)(W999|W998|E997|E996):\s*\["(.*)"\s(\d*)[/](\d*)\]\s\[INSP\]\s(.+?)(TCVX-\d+)\.(.*)'
+            pat = r'(.*)(E980|W981|E982|W983|W999|W998|E997|E996):\s*\["(.*)"\s(\d*)[/](\d*)\]\s\[INSP\]\s(.+?)(TCVX-\d+)\.(.*)'
 
             matchObj = re.match(pat, li)
 
@@ -185,15 +189,29 @@ class LogDB(object):
                 column = matchObj.group(5)
                 message = matchObj.group(6).strip()
                 if message.find("detected potential occurrence") > -1:
-                    detectiontype = "potential affected"
+                    detectiontype = "p"
                 elif message.find("detected occurrence") > -1:
-                    detectiontype = "affected"
+                    detectiontype = "d"
                 else:
                     assert False, "ERROR: Script is wrong - no unclear result possible!"
                     detectiontype = "unclear result"
+                
                 issueid = matchObj.group(7).strip()
                 extension = matchObj.group(8).strip()
+                
+                ## NEW additional information if assembly comparison resulted in relevant diff within the same log message
+                if extension.find("No change in assembly comparison") > -1:
+                    detectiontype = detectiontype + ";n" # likely a false positive detection, no change in assembly comparison detected"
+                elif extension.find("Detected difference in assembly comparison") > -1:
+                    detectiontype = detectiontype + ";c" # needs manual impact analysis which you can start based on generated assembly files {extension}"
+                    # TODO parse out the affected / non-affected assembly files out when we require them
+                    detectiontype = detectiontype + ";./;.affected;.unaffected"
 
+                else:
+                    detectiontype = detectiontype + ";-" # normal detection, no assembly comparison available
+                    
+    
+    
                 e = Detection(
                     tstamp,
                     cmdline,
@@ -206,6 +224,7 @@ class LogDB(object):
                     issueid,
                     extension,
                 )
+                
                 self._add_log_entry(e)
 
                 reusePreviousRow = False
