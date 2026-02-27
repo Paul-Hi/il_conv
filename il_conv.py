@@ -14,8 +14,7 @@ import export_html
 import export_xlsx
 from issuedb import IssueDB
 from parse import LogDB
-
-VERSION_STR = "v3.0 beta"
+from version import VERSION_STR
 
 
 def parse_arguments() -> argparse.Namespace:
@@ -107,22 +106,15 @@ def il_conv():
 
     # check release notes file name and derive compiler and inspector version from it
     relnote = Path(args.relnotefile)
-    assert relnote.is_file, "ERROR: Passed release note file '{}' is not a file".format(
-        relnote
-    )
+    if not relnote.is_file():
+        raise FileNotFoundError("ERROR: Passed release note file '{}' is not a file".format(relnote))
     stem = relnote.stem
-    assert stem.startswith(
-        "readme_tricore_"
-    ), "ERROR: Passed release note file name '{}' doesn't start with 'readme_tricore_'".format(
-        relnote
-    )
+    if not stem.startswith("readme_tricore_"):
+        raise ValueError("ERROR: Passed release note file name '{}' doesn't start with 'readme_tricore_'".format(relnote))
 
     compiler_version = stem[len("readme_tricore_") :]
-    assert compiler_version.startswith("v6.2r2") or compiler_version.startswith(
-        "v6.3r1"
-    ), "ERROR: Passed release note file name compiler '{}' doesn't match 'v6.2r2' or 'v6.3r1'".format(
-        relnote
-    )
+    if not (compiler_version.startswith("v6.2r2") or compiler_version.startswith("v6.3r1")):
+        raise ValueError("ERROR: Passed release note file name compiler '{}' doesn't match 'v6.2r2' or 'v6.3r1'".format(relnote))
     compiler_version = compiler_version[: len("v6.3r1")]
 
     # sidx = stem.rfind("v1.0r")
@@ -130,18 +122,17 @@ def il_conv():
     inspector_version = "v1.0"  # stem[ sidx : ]
 
     xmlfile = Path(args.xmlfile)
-    assert xmlfile.is_file, "ERROR: Passed XML export file  '{}' is not a file".format(
-        relnote
-    )
+    if not xmlfile.is_file():
+        raise FileNotFoundError("ERROR: Passed XML export file '{}' is not a file".format(xmlfile))
 
     # generate
     db = IssueDB(compiler_version, inspector_version, xmlfile, relnote, args.verbose)
 
-    num = db.importReleaseNote()
+    num = db.import_release_note()
     if args.verbose:
         print(f"INFO: Import {num} rows of detector information.")
 
-    num = db.importXMLFile()
+    num = db.import_xml_file()
     if args.verbose:
         print(f"INFO: Import {num} rows of portal issue information.")
 

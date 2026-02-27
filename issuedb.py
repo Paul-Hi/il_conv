@@ -109,6 +109,11 @@ Issue = namedtuple(
 )
 
 
+def _get_text(tag, default: str = "") -> str:
+    """Return stripped text of a BeautifulSoup tag, or default if the tag is None."""
+    return tag.get_text(strip=True) if tag is not None else default
+
+
 class IssueDB(object):
     """The IssueDB hosting all information we know from issues."""
 
@@ -129,13 +134,13 @@ class IssueDB(object):
         self.verbose = verbose
         self.conn = sqlite3.connect(self.dbname)  # , autocommit = True)
         self.cur = self.conn.cursor()
-        self._createTables()
+        self._create_tables()
 
     def __del__(self):
         if self.conn:
             self.conn.close()
 
-    def _createTables(self):
+    def _create_tables(self):
         # create ReleaseNoteIssue table
         defaultVal = ReleaseNoteIssue()._asdict()
 
@@ -159,12 +164,12 @@ class IssueDB(object):
         self.cur.execute(create)
         self.conn.commit()
 
-    def _countOfRows(self, tablename: str) -> int:
+    def _count_of_rows(self, tablename: str) -> int:
         sql = "SELECT count(*) FROM " + tablename
         num = self.cur.execute(sql).fetchone()[0]
         return num
 
-    def _addReleaseNoteIssue(self, row: ReleaseNoteIssue):
+    def _add_release_note_issue(self, row: ReleaseNoteIssue):
         number_of_fields = len(ReleaseNoteIssue._fields)
         sql = (
             "INSERT INTO ReleaseNoteIssues ("
@@ -179,7 +184,7 @@ class IssueDB(object):
         )
         self.conn.commit()
 
-    def _addPortalIssue(self, row: PortalIssue):
+    def _add_portal_issue(self, row: PortalIssue):
         number_of_fields = len(PortalIssue._fields)
         sql = "INSERT INTO PortalIssues (" + ",".join(PortalIssue._fields) + " ) "
         sql += " VALUES ( " + ",".join(["?"] * number_of_fields) + " )"
@@ -187,7 +192,7 @@ class IssueDB(object):
         self.cur.execute(sql, tuple(row))
         self.conn.commit()
 
-    def importReleaseNote(self) -> int:
+    def import_release_note(self) -> int:
         """Import Inspector release note file into database table.
             Does some dump cross checks with passed inspector compiler version ...
 
@@ -217,11 +222,17 @@ class IssueDB(object):
             print("INFO: Import issue information")
 
         soup = BeautifulSoup(input, "html.parser")
-        title = soup.title.get_text(strip=True)
+        title_tag = soup.title
+        if title_tag is None:
+            raise ValueError(
+                "\nERROR: Release Notes / Readme file is missing a <title> tag"
+            )
+        title = title_tag.get_text(strip=True)
         err = "\nERROR: Release Notes / Readme file has wrong structure for 'TriCore {} Inspector {}' , saw title '{}' ".format(
             self.compiler_version, self.inspector_version, title
         )
-        assert title.find(self.compiler_version) >= 0, err
+        if self.compiler_version not in title:
+            raise ValueError(err)
 
         #
         # Parse out the table from html file.
@@ -278,11 +289,11 @@ class IssueDB(object):
             # unpack list into ReleaseNoteIssue
             entry = ReleaseNoteIssue(*newrow)
 
-            self._addReleaseNoteIssue(entry)
+            self._add_release_note_issue(entry)
 
-        return self._countOfRows("ReleaseNoteIssues")
+        return self._count_of_rows("ReleaseNoteIssues")
 
-    def importXMLFile(self) -> int:
+    def import_xml_file(self) -> int:
         """Import TASKING issue portal compiler XML-export files into database table.
             Does some dump cross checks with passed inspector compiler version ...
 
@@ -314,19 +325,23 @@ class IssueDB(object):
             print("INFO: Import detector / issue information.")
 
         soup = BeautifulSoup(input, "xml")
-        pv = soup.find("product_version").get_text(strip=True)
+        pv_tag = soup.find("product_version")
+        if pv_tag is None:
+            raise ValueError("ERROR: XML file is missing required <product_version> tag")
+        pv = pv_tag.get_text(strip=True)
         pvv = pv[-len(self.compiler_version) :]
         err = "\nERROR: XML file is for wrong compiler version\nERROR: Expect file for 'TriCore {}' saw tag '{}' ".format(
             self.compiler_version, pv
         )
-        assert self.compiler_version == pvv, err
+        if self.compiler_version != pvv:
+            raise ValueError(err)
 
         all_issues = soup.find_all("issue")
         # number_of_issues = len(all_issues)
 
         for index, issue in enumerate(all_issues):
-            id = issue.find("id").get_text(strip=True)
-            summary = issue.find("summary").get_text(strip=True)
+            id = _get_text(issue.find("id"))
+            summary = _get_text(issue.find("summary"))
 
             component = ",".join(
                 [co.get_text(strip=True) for co in issue.find_all("component")]
@@ -335,43 +350,25 @@ class IssueDB(object):
             affected_toolchain = ",".join(
                 [af.get_text(strip=True) for af in issue.find_all("affected_toolchain")]
             )
-            if len(affected_toolchain) == 0:
-                affected_toolchain = ""
 
-            sil = issue.find("sil").get_text(strip=True)
-
-            published = issue.find("published").get_text(strip=True)
-            if len(published) == 0:
-                published = ""
-
-            updated = issue.find("updated").get_text(strip=True)
-            if len(updated) == 0:
-                updated = ""
-
-            mitigation = issue.find("mitigation").get_text(strip=True)
-            if len(mitigation) == 0:
-                mitigation = ""
+            sil = _get_text(issue.find("sil"))
+            published = _get_text(issue.find("published"))
+            updated = _get_text(issue.find("updated"))
+            mitigation = _get_text(issue.find("mitigation"))
 
             affected_version = ",".join(
                 [av.get_text(strip=True) for av in issue.find_all("affected_version")]
             )
-            if len(affected_version) == 0:
-                affected_version = ""
 
             fix_version = ",".join(
                 [fv.get_text(strip=True) for fv in issue.find_all("fix_version")]
             )
-            if len(fix_version) == 0:
-                fix_version = ""
 
-            description = issue.find("description").get_text(strip=True)
+            description = _get_text(issue.find("description"))
 
             inspector_version = ",".join(
                 [iv.get_text(strip=True) for iv in issue.find_all("inspector")]
             )
-
-            if len(inspector_version) == 0:
-                inspector_version = ""
 
             row = [
                 id,
@@ -388,21 +385,20 @@ class IssueDB(object):
                 inspector_version,
             ]
 
-            assert len(XML_EXPORT_RECORD) == len(
-                row
-            ), "ERROR: There might be an inconsistent with assumed XML structure."
+            if len(XML_EXPORT_RECORD) != len(row):
+                raise ValueError("ERROR: There might be an inconsistency with assumed XML structure.")
 
             # unpack list into PortalIssue
             entry = PortalIssue(*row)
-            self._addPortalIssue(entry)
+            self._add_portal_issue(entry)
 
-        return self._countOfRows("PortalIssues")
+        return self._count_of_rows("PortalIssues")
 
-    def getListOfDetectableIssues(self) -> list:
+    def get_list_of_detectable_issues(self) -> list:
         self.cur.execute("SELECT id FROM ReleaseNoteIssues ORDER BY id")
         return [id[0] for (id) in self.cur.fetchall()]
 
-    def getPortalIssue(self, id: str) -> PortalIssue:
+    def get_portal_issue(self, id: str) -> PortalIssue:
         """Search issue id in passed dataframe.
         Args:
             id (str): issue id, e.g. TCVX-xxxxx
@@ -421,7 +417,7 @@ class IssueDB(object):
         else:
             return None
 
-    def getReleaseNoteIssue(self, id: str) -> ReleaseNoteIssue:
+    def get_release_note_issue(self, id: str) -> ReleaseNoteIssue:
         """Search issue id in ReleaseNoteIssues Table
         Args:
             id (str): issue id, e.g. TCVX-xxxxx
@@ -440,7 +436,7 @@ class IssueDB(object):
         else:
             return None
 
-    def getIssue(self, id: str) -> Issue:
+    def get_issue(self, id: str) -> Issue:
         """_summary_
 
         Args:
@@ -451,8 +447,8 @@ class IssueDB(object):
 
             Note: The issue might only include partial information from release note.
         """
-        ri = self.getReleaseNoteIssue(id)
-        pi = self.getPortalIssue(id)
+        ri = self.get_release_note_issue(id)
+        pi = self.get_portal_issue(id)
 
         if pi and ri:
             pd = pi._asdict()
@@ -474,7 +470,7 @@ class IssueDB(object):
             return i
         return None
 
-    def isIssueAffectingCompilerVersion(self, id: str, cv: str) -> bool:
+    def is_issue_affecting_compiler_version(self, id: str, cv: str) -> bool:
         """Check if issue id is affecting a specific compiler version.
 
         Args:
@@ -485,7 +481,7 @@ class IssueDB(object):
             bool: if issue affects compiler version. True if no data avilable available
             Note: Within current TASKING issue portal XML export no issue which was closed with won't fix is include ...
         """
-        i = self.getIssue(
+        i = self.get_issue(
             id,
         )
         if i and len(i.affected_version) > 0:

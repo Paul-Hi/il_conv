@@ -89,7 +89,7 @@ def generateHTML(
     )
     tr_tds_rows = ""
     for fn, fp, id, line, column, detection in curs:
-        ii = db.getIssue(id)
+        ii = db.get_issue(id)
         assert (
             ii is not None
         ), f"ERRRO: Log includes detected issue id but we have no information about it.\n{id} {fp} line"

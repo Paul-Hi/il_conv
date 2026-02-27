@@ -6,7 +6,7 @@ Copyright (C) 2024 Peter Himmler
 Apache License 2.0
 """
 
-from il_conv import VERSION_STR
+from version import VERSION_STR
 
 from datetime import datetime
 
@@ -117,12 +117,13 @@ def _addOneSheet(
                 fn2fp[fn] = (1, fp)
 
             # print (row)
-            ii = db.getIssue(id)
+            ii = db.get_issue(id)
 
-            assert (
-                ii is not None
-            ), f"ERROR: Log includes detected issue id '{id}' in file '{fp}' \
-                 but we have no information about it. Are you a current issue portal XML export and Inspector release note?"
+            if ii is None:
+                raise ValueError(
+                    f"ERROR: Log includes detected issue id '{id}' in file '{fp}' "
+                    "but we have no information about it. Are you using a current issue portal XML export and Inspector release note?"
+                )
 
             auto_judgement = _map_dtype_2_auto_judgement(detection)
 
@@ -139,74 +140,6 @@ def _addOneSheet(
                 lines,
                 auto_judgement,
                 ]
-
-            ws.append(csvrow)
-
-    elif fm == Formatmode.NORMAL:
-        worksheet_name = "Report normal"
-        ws = wb.create_sheet(worksheet_name)
-
-        # (fieldname, type, Autofit, visible, , autofit max chars)
-        col_style = [
-            ("File Name", "file", False, Visible, -1),
-            ("File Path", "string", True, Hide, 40),
-            ("Detector", "string", False, Visible, -1),
-            ("Issue ID", "hyper", False, Visible, 10),
-            ("SIL", "string", False, Visible, -1),
-            ("Fixed Version", "string", False, Visible, -1),
-            ("Summary", "string", False, Visible, 60),
-            ("Description", "string", False, Hide, 0),
-            ("Mitigation", "string", False, Hide, 60),
-            ("Line", "int", True, Visible, -1),
-            ("Column", "int", True, Visible, -1),
-            ("Auto judgement", "string", True, Visible, -1),
-            ("Resolved/Checked", "string", True, Visible, -1),
-        ]
-        headings = [f for (f, _, _, _, _) in col_style]
-
-        # Add headings
-        ws.append(headings)
-
-        curs = log_db.conn.execute(
-            "select file, filepath, issueid, line, column, detectiontype FROM Logs ORDER By file, rowid"
-        )
-
-        for fn, fp, id, line, column, detection in curs:
-
-            if fn2fp.get(fn) is not None:
-                (count, existing_fp) = fn2fp[fn]
-                if existing_fp != fp:
-                    print(
-                        f"WARN: Your project seems to have multiple times file '{fn}' in different folders, you should use expanded format and looking at the full pathname within the report."
-                    )
-                    fn2fp[fn] = (count + 1, fp)
-            else:
-                # first time or reoccurance of same fp for a fn
-                fn2fp[fn] = (1, fp)
-
-            ii = db.getIssue(id)
-
-            assert (
-                ii is not None
-            ), f"ERRRO: Log includes detected issue id but we have no information about it.\n{id} {fp} line"
-
-            auto_judgement = _map_dtype_2_auto_judgement(detection)
-             
-            csvrow = [
-                fn,
-                fp,
-                ii.detectiontype,
-                ii.id,
-                ii.sil,
-                ii.fix_version,
-                ii.summary,
-                ii.description,
-                ii.mitigation,
-                line,
-                column,
-                auto_judgement,
-                "not checked",
-            ]
 
             ws.append(csvrow)
 
@@ -251,11 +184,13 @@ def _addOneSheet(
                 # first time or reoccurance of same fp for a fn
                 fn2fp[fn] = (1, fp)
 
-            ii = db.getIssue(id)
+            ii = db.get_issue(id)
 
-            assert (
-                ii is not None
-            ), f"ERRRO: Log includes detected issue id but we have no information about it.\n{id} {fp} line"
+            if ii is None:
+                raise ValueError(
+                    f"ERROR: Log includes detected issue id '{id}' in file '{fp}' "
+                    "but we have no information about it. Are you using a current issue portal XML export and Inspector release note?"
+                )
 
             auto_judgement = _map_dtype_2_auto_judgement(detection)
 
@@ -319,7 +254,7 @@ def _addOneSheet(
             if "file" in type_str:
                 try:
                     (count, fp) = fn2fp[cell.value]
-                    
+
                     # cross-check: filename <-> fullpath mapping and if there are multiplte filenames in the project in different paths
                     if count > 1 and fm == Formatmode.COMPRESSED:
                         cell.comment = openpyxl.comments.Comment(
@@ -330,14 +265,14 @@ def _addOneSheet(
                             100,
                             640,
                         )
-                except:
+                except KeyError:
                     pass
-                
+
             elif "datetime" in type_str:
                 try:
                     # type str here assumes "datetime;FORMATSTRING"
                     cell.value = datetime.strptime(cell.value, type_str.split(";")[-1])
-                except:
+                except (ValueError, TypeError):
                     pass
                 cell.number_format = openpyxl.styles.numbers.FORMAT_DATE_DDMMYY
 
@@ -345,9 +280,9 @@ def _addOneSheet(
                 try:
                     cell.value = int(cell.value)
                     cell.number_format = openpyxl.styles.numbers.FORMAT_NUMBER
-                except:
+                except (ValueError, TypeError):
                     pass
-                
+
             elif "hyper" in type_str:
                 try:
                     ##
@@ -356,14 +291,14 @@ def _addOneSheet(
                     ##
                     ## current apporach is to use the cell styling, but looks that the library or excel has a bug
                     ## After styling no ws changes like insert/remove a row is allowed as otherwise hyperlink is attached
-                    ## to the wrong cell after loading in EXCEL. OMG - GRRRRR 
+                    ## to the wrong cell after loading in EXCEL. OMG - GRRRRR
                     ##
-                    
+
                     cell.style = "Hyperlink"
 
                     id = str(cell.value)  # .split('-')[-1]
                     if id.startswith("TCVX-") or id.startswith("SMRT-"):
-                        ii = db.getIssue(id)
+                        ii = db.get_issue(id)
                         cell.comment = openpyxl.comments.Comment(
                             "MITIGATION:\n{}".format(ii.mitigation),
                             "generated",
@@ -372,7 +307,7 @@ def _addOneSheet(
                         )
                         uri = f"https://issues.tasking.com/?issueid={id}"
                         cell.hyperlink = uri
-                except:
+                except (AttributeError, KeyError, TypeError):
                     pass
     
     # define the table at A2 
@@ -497,7 +432,6 @@ def generateExcel(
         ws.column_dimensions[col].width = value
 
     _addOneSheet(wb, db, log_db, Formatmode.COMPACT, verbose)
-    _addOneSheet(wb, db, log_db, Formatmode.NORMAL, verbose)
     _addOneSheet(wb, db, log_db, Formatmode.EXTENDED, verbose)
 
     if verbose:
