@@ -107,7 +107,7 @@ def il_conv():
 
     # check release notes file name and derive compiler and inspector version from it
     relnote = Path(args.relnotefile)
-    assert relnote.is_file, "ERROR: Passed release note file '{}' is not a file".format(
+    assert relnote.is_file(), "ERROR: Passed release note file '{}' is not a file".format(
         relnote
     )
     stem = relnote.stem
@@ -130,7 +130,7 @@ def il_conv():
     inspector_version = "v1.0"  # stem[ sidx : ]
 
     xmlfile = Path(args.xmlfile)
-    assert xmlfile.is_file, "ERROR: Passed XML export file  '{}' is not a file".format(
+    assert xmlfile.is_file(), "ERROR: Passed XML export file  '{}' is not a file".format(
         relnote
     )
 

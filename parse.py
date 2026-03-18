@@ -243,7 +243,7 @@ class LogDB(object):
                     cmdline = ""
 
                 diagmsgno = matchObj.group(2).strip()
-                if diagmsgno.find("I991"):
+                if diagmsgno == "I991":
                     if self.verbose:
                         print("IGNORE: no-issue-detected messages\n")
 
@@ -265,18 +265,18 @@ class LogDB(object):
                     cmdline = ""
 
                 diagmsgno = matchObj.group(2).strip()
-                if diagmsgno.find("E993") or diagmsgno.find("W994"):
+                if diagmsgno in ("E993", "W994"):
                     if self.verbose:
                         print(
                             "IGNORE: Detected change in assembler listing messages cmd {0}\n",
                             matchObj.group(5),
                         )
-                elif diagmsgno.find("I992"):
+                elif diagmsgno == "I992":
                     if self.verbose:
                         print(
                             "IGNORE: Asm cmp message. You want to manually evaluate / compare the generated files.\n"
                         )
-                elif diagmsgno.find("E995"):
+                elif diagmsgno == "E995":
                     if self.verbose:
                         print(
                             "IGNORE: Problem identified with assembler comparison execution: {0}.\n",

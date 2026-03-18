@@ -102,6 +102,10 @@ In case you wanna *use* the python scripts, you have to at least install python 
 In case you wanna build the scripts into a onefile executabe
 - nuitka based - supported (see create_nuitka_exe.bat on windows)
 
+## Testing
+- Run the complete test suite with `run_tests.bat`
+- Or run directly with `python -m unittest discover -s tests`
+
 Be aware that nuitka builds depends on a bunch of addtional things to be installed in addtion (e.g. gcc compiler) on the build machine
 --> much easier is using the provided exe file from our release page
 
