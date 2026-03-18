@@ -3,9 +3,13 @@
 </p>
 
 # * unreleased *
-* todo: parse dir, affected, unaffected out of extension of message
+*
 
-# *New* Version: v3.0 beta2
+# *New* Version: v3.0 beta3
+- Add;      Vibe code unit & integration tests (partially privat test data not commited to OSS).
+- Modified: Correct RegExp handling in general and improve info verbose logging
+- Modified: RegExp to parse new inspector log messages incl. dir/affect/unaffect when assembly is different
+- Fix:      Issues around static typing and inconsistent documentation
 - Removed:  Remove normal sheet generation from Excel output. The workbook now produces only compact and extended report sheets.
 - Fix:      Circular dependency by extracting VERSION_STR to version.py
 - Fix:      Undiscovered use of none-existing Formatmode.COMPRESSED 
@@ -22,6 +26,7 @@
 - Add:      Support for upcoming automated execution of assembly files generated with and without bug fix applied
 - Add:      Prepare for Inspector tools supporting different compiler version
 - Modified: Update documentation, incl. now examples how to download XLM export files automated as TASKING customer.
+
 **NOTE: The resolved / check column is not preserved during runs.**\
 Might be a feature in future.
 

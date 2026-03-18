@@ -3,3 +3,6 @@ beautifulsoup4
 lxml
 openpyxl
 Pillow
+
+##### Development / test dependencies ######
+coverage

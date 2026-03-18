@@ -221,18 +221,7 @@ class LogDB(object):
         Returns:
             None
         """
-
-        #        s = '\tW981: ["../../../external/Components/BswM/Implementation/BswM.c" 1813/8] [INSP] detected potential occurrence of issue TCVX-45285. No change in assembly comparison detected. High confidence it is a false positive and therefore can be ignored.'
-        #       RE_ASM_INFO = re.compile(
-        #          r"(?P<prefix>.*)"
-        #         r"(?P<diagcode>E980|W981|E982|W993):\s"
-        #        r'\["(?P<filepath>.*)"\s(?P<line>\d*)[/](?P<column>\d*)\]\s'
-        #       r"\[INSP\]\s(?P<message>.+ of issue )"
-        #      r"(?P<issueid>(TCVX-|SMRT-)\d+)[\.|\s*]"
-        #     r"(?P<extension>.*)"
-        # )
-        # match = RE_ASM_INFO.match(s)
-
+        
         lines = []
 
         if file_name is not None:
