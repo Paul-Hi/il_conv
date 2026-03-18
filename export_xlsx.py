@@ -44,12 +44,14 @@ def _map_dtype_2_auto_judgement(d : str ):
     t, a, dir, f1, f2  = l1
     
     auto_judge = {
-        ('p', '-'): "Potential. Further manual investigation required.",
-        ('p', 'n'): "Potential. Most likely a false positive, ignore.",
-        ('p', 'c'): f"Potential. Further manual investigation required. Assembly files '{f1}', '{f2}' generated  in '{dir}'.",
-        ('d', '-'): "Definite. Most likely impacted. Check if mitigation is applied.",
-        ('d', 'n'): "Definite. Unclear definite detection. Executed assembly comparison haven't shown a change ?? Reach out to vendor support-",
-        ('d', 'c'): f"Definite. Most likely impacted. Assembly files '{f1}', '{f2}' generated in '{dir}'. Check if mitigation is applied.",
+        ('p', '-'): "Potential. Manual investigation required. Check if mitigation is already applied.",
+        ('p', 'n'): "Potential. High confidence it is a false positive and therefore can be ignored.",
+        ('p', 'c'): f"Potential. Manual investigation required. Assembly files '{dir}/{f1}', '{dir}/{f2}' generated.",
+        ('d', '-'): "Definite. Most likely impacted. Check if mitigation is already applied.",
+        ('?', '?'): "Unclear results. Reach out to vendor support of this script",  
+      
+      #  ('d', 'n'): "Definite. Unclear definite detection. Executed assembly comparison haven't shown a change? Reach out to vendor support-",  
+      #  ('d', 'c'): f"Definite. Most likely impacted. Assembly files '{f1}', '{f2}' generated in '{dir}'. Check if mitigation is applied.",     # not used ? 
     }
    
     # Default result
@@ -172,7 +174,7 @@ def _addOneSheet(
             "select file, filepath, issueid, line, column, detectiontype FROM Logs ORDER By file, issueid, line"
         )
 
-        for fn, fp, id, line, column, detection in curs:
+        for fn, fp, id, line, column, detectiontype in curs:
             if fn2fp.get(fn) is not None:
                 (count, existing_fp) = fn2fp[fn]
                 if existing_fp != fp:
@@ -192,7 +194,7 @@ def _addOneSheet(
                     "but we have no information about it. Are you using a current issue portal XML export and Inspector release note?"
                 )
 
-            auto_judgement = _map_dtype_2_auto_judgement(detection)
+            auto_judgement = _map_dtype_2_auto_judgement(detectiontype)
 
             csvrow = [
                 fn,
@@ -256,9 +258,9 @@ def _addOneSheet(
                     (count, fp) = fn2fp[cell.value]
 
                     # cross-check: filename <-> fullpath mapping and if there are multiplte filenames in the project in different paths
-                    if count > 1 and fm == Formatmode.COMPRESSED:
+                    if count > 1 and fm == Formatmode.COMPACT:
                         cell.comment = openpyxl.comments.Comment(
-                            "HINT: File name '{}' is not unique within your project - the compressed formatting report might wrongly mix multiple occurances!!\n{}".format(
+                            "HINT: File name '{}' is not unique within your project - the compact formatting report might wrongly mix multiple occurances!!\n{}".format(
                                 cell.value, fp
                             ),
                             "generated",
