@@ -23,9 +23,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             artifact_name: il_conv.bin
-            asset_name: il_conv-linux-x64
+            asset_name: il_conv-linux-x64-ubuntu-22.04
           - os: windows-latest
             artifact_name: il_conv.exe
             asset_name: il_conv-windows-x64.exe
@@ -74,6 +74,7 @@ jobs:
           --include-data-file=res/logo.png=res/logo.png
           --onefile
           --mingw64
+          --onefile-no-compression
           --assume-yes-for-downloads
           il_conv.py
 
