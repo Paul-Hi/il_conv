@@ -24,7 +24,7 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-            artifact_name: il_conv
+            artifact_name: il_conv.bin
             asset_name: il_conv-linux-x64
           - os: windows-latest
             artifact_name: il_conv.exe
