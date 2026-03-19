@@ -65,7 +65,7 @@ class TestReTimestamp(unittest.TestCase):
 
 class TestReDetection(unittest.TestCase):
 
-    W998 = 'W998: ["C:\path/file.h" 66/1] [INSP] detected potential occurrence of issue TCVX-44008.'
+    W998 = r'W998: ["C:\path/file.h" 66/1] [INSP] detected potential occurrence of issue TCVX-44008.'
     W999 = 'W999: ["C:/path/file.c" 10/2] [INSP] detected occurrence of issue TCVX-12345.'
     E996 = 'E996: ["src/foo.c" 1/1] [INSP] detected occurrence of issue SMRT-9999.'
     E997 = 'E997: ["src/foo.c" 2/3] [INSP] detected potential occurrence of issue SMRT-1234.'
@@ -97,7 +97,7 @@ class TestReDetection(unittest.TestCase):
 
     def test_filepath_line_column(self):
         m = RE_DETECTION.match(self.W998)
-        self.assertEqual(m.group("filepath"), "C:\path/file.h")
+        self.assertEqual(m.group("filepath"), r"C:\path/file.h")
         self.assertEqual(m.group("line"), "66")
         self.assertEqual(m.group("column"), "1")
 
