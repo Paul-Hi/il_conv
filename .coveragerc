@@ -1,0 +1,7 @@
+[run]
+source = parse,export_xlsx,export,issuedb,version,il_conv
+omit = tests/*
+disable_warnings = already-imported
+
+[report]
+show_missing = true

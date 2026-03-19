@@ -1,0 +1,40 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+permissions:
+  contents: write   # needed to create the GitHub Release and upload assets
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-nuitka.yml
+    with:
+      artifact_suffix: ${{ github.ref_name }}
+      retention_days: 90
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download all build artifacts
+        uses: actions/download-artifact@v8
+        with:
+          path: dist/
+
+      - name: Create release and upload assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "il_conv ${{ github.ref_name }}"
+          generate_release_notes: true
+          files: |
+            dist/il_conv-linux-x64-${{ github.ref_name }}/il_conv
+            dist/il_conv-windows-x64.exe-${{ github.ref_name }}/il_conv.exe

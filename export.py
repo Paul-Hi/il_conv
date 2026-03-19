@@ -9,4 +9,4 @@ Apache License 2.0
 
 from enum import Enum
 
-Formatmode = Enum("Formatmode", ["COMPACT", "NORMAL", "EXTENDED"])
+Formatmode = Enum("Formatmode", ["COMPACT", "EXTENDED"])

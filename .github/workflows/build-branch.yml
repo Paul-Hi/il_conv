@@ -1,0 +1,19 @@
+name: Build branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to build from"
+        required: true
+        default: "main"
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-nuitka.yml
+    with:
+      artifact_suffix: ${{ inputs.branch }}
+      retention_days: 30

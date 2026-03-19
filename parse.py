@@ -1,5 +1,5 @@
 """
-File:   parse.py 
+File:   parse.py
 Desc:   Script functions to parse Tasking Compiler/Inspector output
 
 Copyright (C) 2022 Paul Himmler, Peter Himmler
@@ -8,12 +8,112 @@ Apache License 2.0
 
 import re
 import os
-#from pathlib import Path
 import sqlite3
-
 
 from collections import namedtuple
 
+
+# =============================================================================
+# Regex patterns for parsing TASKING Inspector log output
+# =============================================================================
+
+# Timestamp row pattern
+# Example: "2021-08-04 13:40:16 # insp_ctc -E+comments -c99 ..."
+RE_TIMESTAMP = re.compile(
+    r"(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) # (?P<cmdline>.*)"
+)
+
+# Detection message pattern (main Inspector output)
+## Note: Exxx messages only used internal at TASKING (according to TASKING) and can't be generated
+##       by a release Inspector tool
+# insp_cctc.exe --diag=all|rg \[INSP
+#  I991: [INSP] No definite or potential issues detected for the enabled list of
+#  E996: [INSP] detected occurrence of issue <id>
+#  E997: [INSP] detected potential occurrence of issue <id>
+#  W998: [INSP] detected potential occurrence of issue <id>
+#  W999: [INSP] detected occurrence of issue <id>
+# insp_cptc.exe --diag|rg \[INSP
+#  2950: [INSP] detected potential occurrence of issue %s.
+#  2951: [INSP] detected occurrence of issue %s.
+#  2952: [INSP] No definite or potential issues detected for the enabled list of detectors
+# insp_ctc.exe --diag=all|rg \[INSP
+##  E980: [INSP] detected potential occurrence of issue <id> No change in assembly
+###  W981: [INSP] detected potential occurrence of issue <id> No change in assembly
+##  E982: [INSP] detected potential occurrence of issue <id> Detected difference
+###  W983: [INSP] detected potential occurrence of issue <id> Detected difference
+##  W984: [INSP] Input MIL files (.mil, .ma, .ms) are identified. Inspector cannot
+#  I991: [INSP] No definite or potential issues detected for the enabled list of
+##  I992: [INSP] asm cmp: <text>
+##  E993: [INSP] detected change in assembly listing for command: <cmd>
+##  W994: [INSP] detected change in assembly listing for command: <cmd>
+##  E995: [INSP] problem with assembly comparison execution: <problem>
+#  E996: [INSP] detected potential occurrence of issue <id>
+#  E997: [INSP] detected occurrence of issue <id>
+#  W998: [INSP] detected potential occurrence of issue <id>
+#  W999: [INSP] detected occurrence of issue <id>
+# insp_astc.exe --diag=all|rg \[INSP
+##  I991: [INSP] No definite or potential issues detected for the enabled list of
+#  E996: [INSP] detected occurrence of issue <id>
+#  E997: [INSP] detected potential occurrence of issue <id>
+#  W998: [INSP] detected potential occurrence of issue <id>
+#  W999: [INSP] detected occurrence of issue <id>
+# insp_ltc.exe --diag=all|rg \[INSP
+##  I993: [INSP] No definite or potential issues detected for the enabled list of
+#  E996: [INSP] detected occurrence of issue <id>
+#  E997: [INSP] detected potential occurrence of issue <id>
+#  W998: [INSP] detected potential occurrence of issue <id>
+#  W999: [INSP] detected occurrence of issue <id>
+
+# Diagnostic codes:
+#   E996/E997: Error - potential/definite occurrence
+#   W998/W999: Warning - potential/definite occurrence
+#   E980/W981: Potential occurrence, no assembly change (likely false positive)
+#   E982/W983: Potential occurrence, assembly difference detected
+# Example: W998: ["C:\path\file.h" 66/1] [INSP] detected potential occurrence of issue TCVX-44008.
+RE_DETECTION = re.compile(
+    r"(?P<prefix>.*)"
+    r"(?P<diagcode>W998|W999|E996|E997):\s*"
+    r'\["(?P<filepath>.*)"\s(?P<line>\d*)/(?P<column>\d*)\]\s'
+    r"\[INSP\]\s(?P<message>.+?)"
+    r"(?P<issueid>(TCVX-|SMRT-)\d+)[\.\s]"
+    r"(?P<extension>.*)"
+)
+
+# No issues detected pattern
+# Example:
+#  I991: [INSP] No definite or potential issues detected for the enabled list of
+# insp_ctc.exe
+#  W984: [INSP] Input MIL files (.mil, .ma, .ms) are identified. Inspector cannot
+#  I992: [INSP] asm cmp: <text>
+#  E993: [INSP] detected change in assembly listing for command: <cmd>
+#  W994: [INSP] detected change in assembly listing for command: <cmd>
+#  E995: [INSP] problem with assembly comparison execution: <problem>
+# insp_ltc.exe
+#  I993: [INSP] No definite or potential issues detected for the enabled list of# I993 same but other tool
+
+RE_DIAG_ONLY_VERBOSE_LOG = re.compile(
+    r"(?P<prefix>.*)(?P<diagcode>I991|W984|I993|I992|E993|W994|E995):\s\[INSP\]\s(?P<message>.*)"
+)
+
+# Assembly comparison / informational messages pattern
+##  E980: [INSP] detected potential occurrence of issue <id> No change in assembly
+###  W981: [INSP] detected potential occurrence of issue <id> No change in assembly
+##  E982: [INSP] detected potential occurrence of issue <id> Detected difference
+###  W983: [INSP] detected potential occurrence of issue <id> Detected difference
+RE_ASM_INFO = re.compile(
+    r"(?P<prefix>.*)"
+    r"(?P<diagcode>E980|W981|E982|W983):\s*"
+    r'\["(?P<filepath>.*)"\s(?P<line>\d*)/(?P<column>\d*)\]\s'
+    r"\[INSP\]\s(?P<message>.+ of issue )"
+    r"(?P<issueid>(TCVX-|SMRT-)\d+)[\.\s]"
+    r"(?P<extension>.*)"
+)
+
+RE_ASM_INFO_DIFFERENCE = re.compile(
+    r"(?P<prefix>.*Assembly files are stored in directory )"
+    r"(?P<directory>.+) as: "
+    r"(?P<file_affected>.*); with fix: (?P<file_unaffected>.*)\.$"
+)
 
 _DETECTION_RECORD_INFO = [
     # fieldname, idx / primary, default value
@@ -24,8 +124,12 @@ _DETECTION_RECORD_INFO = [
     ("file", True, ""),  # idx
     ("line", True, ""),  # idx
     ("column", True, ""),  # idx
-    ("detectiontype", False, ""),  # str: (p | d ) ; ( c | n | - ) [; <file.affexted> ; <file.notaffected> ]
-                                   #  p = potential, d = definite, c = asm changed, n = no change, optional assembly files
+    (
+        "detectiontype",
+        False,
+        "",
+    ),  # str: (p | d ) ; ( c | n | - ) [; <file.affexted> ; <file.notaffected> ]
+    #  p = potential, d = definite, c = asm changed, n = no change, optional assembly files
     ("issueid", True, ""),  # idx
     ("extension", False, ""),
 ]
@@ -42,7 +146,7 @@ Detection = namedtuple(
 class LogDB(object):
     """The LogDB stores all information we gather from log files passed."""
 
-    def __init__(self, verbose: False):
+    def __init__(self, verbose: bool = False):
         self.conn = sqlite3.connect(":memory:")
         # "log.db") #":memory:")
         self.curs = self.conn.cursor()
@@ -108,15 +212,16 @@ class LogDB(object):
         except sqlite3.DatabaseError as de:
             print(f"Database Error: {de}")
 
-    def parse_log_file(self, file_name: str) -> int:
+    def parse_log_file(self, file_name: str) -> None:
         """Import build log files into database table.
             Does some dump cross checks ...
         Attributes:
             file_name (str): The file name of the file to parse (relative path)
 
         Returns:
-            int: return number of inserted new logs
+            None
         """
+        
         lines = []
 
         if file_name is not None:
@@ -137,81 +242,48 @@ class LogDB(object):
         reusePreviousRow = False
 
         for log_line_no, li in enumerate(lines):
-            # https://regex101.com/
-            # "timestamp row"
-            # 2021-08-04 13:40:16 # insp_ctc -E+comments -E-noline -c99 --fp-model=3cflnrSTz -D__CPU__=tc27x .....
-            pat = r"(\d\d\d\d-\d\d-\d\d \d\d:\d\d:\d\d) # (.*)"
-            matchObj = re.match(pat, li)
-            if matchObj:
-                # "timestamp row" -> empty new row
-                if reusePreviousRow:
-                    current_row = dict()
-
-                # Store the timestamp
-                tstamp = matchObj.group(1)
-                # Store the command
-                cmdline = matchObj.group(2).strip()
+            # Match timestamp rows  (only available in insp-log file)
+            match = RE_TIMESTAMP.match(li)
+            if match:
+                # "timestamp row"
+                tstamp = match.group("timestamp")
+                cmdline = match.group("cmdline").strip()
 
                 reusePreviousRow = True
                 continue
 
-            # "message row"
-            #        W998: ["C:\hugo~\.KOP\erica\a.h" 66/1] [INSP] detected potential occurrence of issue TCVX-44008. MAYBE EXTRA ...
-            # E996: [<"full filename>" <line>/<column>] [INSP] detected potential occurrence of issue <id>
-            # E997: [<"full filename>" <line>/<column>] [INSP] detected occurrence of issue <id>
-            # W998: [<"full filename>" <line>/<column>] [INSP] detected potential occurrence of issue <id>
-            # W999: [<"full filename>" <line>/<column>] [INSP] detected occurrence of issue <id>
-            #
-            # since TC v6.3r1 v1.0r8
-            # E980: [INSP] detected potential occurrence of issue <id> No change in assembly comparison detected. High confidence it is a false positive and therefore can be ignored.
-            # W981: [INSP] detected potential occurrence of issue <id> No change in assembly comparison detected. High confidence it is a false positive and therefore can be ignored.
-            # E982: [INSP] detected potential occurrence of issue <id> Detected difference in assembly comparison. Assembly files are stored in directory <directory> as: <nofixfile>; with fix: <withfixfile>
-            # W983: [INSP] detected potential occurrence of issue <id> Detected difference in assembly comparison. Assembly files are stored in directory <directory> as: <nofixfile>; with fix: <withfixfile>
-            # #  gr2         gr3           gr4    gr5                   gr6                    gr7                gr8
-            #
-            pat = r'(.*)(E980|W981|E982|W983|W999|W998|E997|E996):\s*\["(.*)"\s(\d*)[/](\d*)\]\s\[INSP\]\s(.+?)(TCVX-\d+)\.(.*)'
-
-            matchObj = re.match(pat, li)
-
-            if matchObj:
+            # Match detection messages
+            match = RE_DETECTION.match(li)
+            if match:
                 if not reusePreviousRow:
                     tstamp = "1970-01-01 00:00:01"
-                    cmdline = ""
+                    cmdline = "Note: Without using --insp-log the cmdline is unknown!"
 
-                diagmsgno = matchObj.group(2).strip()
-                fp = matchObj.group(3).strip()  ## TODO replace with Path
+                diagmsgno = match.group("diagcode").strip()
+                fp = match.group("filepath").strip()
                 fp = os.path.normpath(fp)
                 fp = fp.replace("\\", "/")
                 fp = os.path.normpath(fp)
-                filepath = fp  # configuration.cut_path(fp)
+                filepath = fp
                 file = os.path.basename(fp)
-                line = matchObj.group(4)
-                column = matchObj.group(5)
-                message = matchObj.group(6).strip()
+                line = match.group("line")
+                column = match.group("column")
+                message = match.group("message").strip()
                 if message.find("detected potential occurrence") > -1:
-                    detectiontype = "p"
+                    detectiontype = (
+                        "p;-"  # normal detection, no assembly comparison available
+                    )
                 elif message.find("detected occurrence") > -1:
-                    detectiontype = "d"
+                    detectiontype = (
+                        "d;-"  # normal detection, no assembly comparison available
+                    )
                 else:
+                    detectiontype = ("?,?")
                     assert False, "ERROR: Script is wrong - no unclear result possible!"
-                    detectiontype = "unclear result"
-                
-                issueid = matchObj.group(7).strip()
-                extension = matchObj.group(8).strip()
-                
-                ## NEW additional information if assembly comparison resulted in relevant diff within the same log message
-                if extension.find("No change in assembly comparison") > -1:
-                    detectiontype = detectiontype + ";n" # likely a false positive detection, no change in assembly comparison detected"
-                elif extension.find("Detected difference in assembly comparison") > -1:
-                    detectiontype = detectiontype + ";c" # needs manual impact analysis which you can start based on generated assembly files {extension}"
-                    # TODO parse out the affected / non-affected assembly files out when we require them
-                    detectiontype = detectiontype + ";./;.affected;.unaffected"
-
-                else:
-                    detectiontype = detectiontype + ";-" # normal detection, no assembly comparison available
                     
-    
-    
+                issueid = match.group("issueid").strip()
+                extension = match.group("extension").strip()
+
                 e = Detection(
                     tstamp,
                     cmdline,
@@ -224,65 +296,108 @@ class LogDB(object):
                     issueid,
                     extension,
                 )
-                
+
                 self._add_log_entry(e)
 
                 reusePreviousRow = False
                 continue
 
-            # "message row"
-            # I991: [INSP] No definite or potential issues detected for the enabled list of
-            # insp_ltc seems to use a different number for it :-/
-            # I993: [INSP] No definite or potential issues detected for the enabled list of
-            pat = r"(.*)(I991|I993):\s\[INSP\]\s(.*)"
-
-            matchObj = re.match(pat, li)
-            if matchObj:
+            # Match msg - to be ignored - only give a verbose log messge here
+            match = RE_DIAG_ONLY_VERBOSE_LOG.match(li)
+            if match:
                 if not reusePreviousRow:
                     tstamp = "1970-01-01 00:00:02"
                     cmdline = ""
 
-                diagmsgno = matchObj.group(2).strip()
-                if diagmsgno.find("I991"):
+                diagmsgno = match.group("diagcode").strip()
+                if "I991" in diagmsgno or "I993" in diagmsgno:
                     if self.verbose:
-                        print("IGNORE: no-issue-detected messages\n")
-
-                reusePreviousRow = True
+                        print("IGNORE: No-issue-detected messages\n")
+                elif "W984" in diagmsgno:
+                    if self.verbose:
+                        print(
+                            "IGNORE: Input MIL files (.mil, .ma, .ms) are identified. Inspection might not be accurate or even wrong!\n"
+                        )
+                elif "I992" in diagmsgno or "E995" in diagmsgno:
+                    if self.verbose:
+                        print("IGNORE: Manual asm comparison or problem problems\n")
+                elif "E993" in diagmsgno or "W994" in diagmsgno:
+                    if self.verbose:
+                        print("IGNORE: Manual asm comparison results\n")
+                reusePreviousRow = False
                 continue
 
-            # "message row"
-            # I992: [INSP] asm cmp: <text>
-            # E993: [INSP] detected change in assembly listing for command: <cmd>
-            # W994: [INSP] detected change in assembly listing for command: <cmd>
-            # E995: [INSP] problem with assembly comparison execution: <problem>
-            #  gr2    gr3           gr4                              gr5   gr6
-            pat = r"(.*)(I991|I992|E993|W994|E995):\s\[INSP\]\s(.+?)(:\s)(.*)"
-
-            matchObj = re.match(pat, li)
-            if matchObj:
+            # Match assembly comparison / informational messages
+            match = RE_ASM_INFO.match(li)
+            if match:
                 if not reusePreviousRow:
                     tstamp = "1970-01-01 00:00:03"
                     cmdline = ""
 
-                diagmsgno = matchObj.group(2).strip()
-                if diagmsgno.find("E993") or diagmsgno.find("W994"):
-                    if self.verbose:
-                        print(
-                            "IGNORE: Detected change in assembler listing messages cmd {0}\n",
-                            matchObj.group(5),
-                        )
-                elif diagmsgno.find("I992"):
-                    if self.verbose:
-                        print(
-                            "IGNORE: Asm cmp message. You want to manually evaluate / compare the generated files.\n"
-                        )
-                elif diagmsgno.find("E995"):
-                    if self.verbose:
-                        print(
-                            "IGNORE: Problem identified with assembler comparison execution: {0}.\n",
-                            matchObj.group(5),
-                        )
-                reusePreviousRow = True
-                continue
+                diagmsgno = match.group("diagcode").strip()
+                fp = match.group("filepath").strip()
+                fp = os.path.normpath(fp)
+                fp = fp.replace("\\", "/")
+                fp = os.path.normpath(fp)
+                filepath = fp
+                file = os.path.basename(fp)
+                line = match.group("line")
+                column = match.group("column")
+                message = match.group("message").strip()
+                issueid = match.group("issueid").strip()
+                extension = match.group("extension").strip()
 
+                # find out if it's a likely a false positive - which should be ignored
+                # or a real problem to check manually.
+                if "E980" in diagmsgno or "W981" in diagmsgno:
+                    if self.verbose:  # No change in assembly a potential false positive?
+                        print(f"INFO ({log_line_no}):\t{extension}")
+                    detectiontype = "p;n"
+
+                elif "E982" in diagmsgno or "W983" in diagmsgno:
+                    if self.verbose:
+                        print(f"INFO ({log_line_no}):\tManual check required! {extension}")
+
+                    match2 = RE_ASM_INFO_DIFFERENCE.match(extension)
+                    if match2:
+                        dir = match2.group("directory").strip()
+                        dir = os.path.normpath(dir)
+                        dir = dir.replace("\\", "/")
+                        dir = os.path.normpath(dir)
+                        file_affected = match2.group("file_affected").strip()
+                        file_unaffected = match2.group("file_unaffected").strip()
+                        if self.verbose:
+                            print(f"INFO ({log_line_no}): \tDirectory\t'{dir}'\n\t\tAffected:\t'{file_affected}'\n\t\tUnaffected:\t'{file_unaffected}'")
+
+                        detectiontype = (
+                            "p;c;"
+                            + dir
+                            + ";"
+                            + file_affected
+                            + ";"
+                            + file_unaffected
+                        )
+                    else:
+                        detectiontype = "p;c;?;?;?"
+                else:
+                    detectiontype = "unclear result"
+
+                e = Detection(
+                    tstamp,
+                    cmdline,
+                    diagmsgno,
+                    filepath,
+                    file,
+                    line,
+                    column,
+                    detectiontype,
+                    issueid,
+                    extension,
+                )
+
+                self._add_log_entry(e)
+
+                reusePreviousRow = False
+                continue
+            print(f"ERROR: UNKNOWN LINE {log_line_no} skipped:\n{li}\n")
         return
