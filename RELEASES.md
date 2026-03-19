@@ -3,6 +3,11 @@
 </p>
 
 # * unreleased *
+- Add: Public release notes of TASKING Inspector from vendor Website
+- Add: Simple public test for release note parsing. 
+- Add: Simple public test using test.log 
+- Fix: Old style github action, forceing node v24
+- Fix: Python 3.12 compatiblity on none-privat tests
 - Add: github CI build on push
 - Add: github release build on PR merged to master or 
   git tag v<version> && git push origin v<version>

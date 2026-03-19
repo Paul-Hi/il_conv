@@ -11,11 +11,11 @@ il_conv.exe
 
 *.xlsx
 *.html
+!RELEASENOTES/*.html
 *.bak
 *.db
 
 XML/*
-RELEASENOTES/*
 
 testdata/issues_tasking_TCVX_v6*.xml
 testdata/readme_tricore_v6.*.html

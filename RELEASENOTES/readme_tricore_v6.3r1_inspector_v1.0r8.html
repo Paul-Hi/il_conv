@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+
+<title>TASKING TriCore v6.3r1 Inspector v1.0r8 Release Note</title>
+
+<style>
+p, div, pre, table, th, td, ul, ol, h2, h3, h4, dd, dt { margin-left: 5px; margin-right: 5px;  }
+dd { font-size:10pt; font-family: sans-serif; }
+dt { font-size:10pt; font-family: sans-serif; font-weight: bold; margin-top: 10px; }
+body { font-size:10pt; font-family: sans-serif; background: #ffffff; max-width: 910px; min-width: 200px; margin: 0 0 0 30px; }
+p, th, td { font-size:10pt; font-family: sans-serif; margin-top: 2px; margin-bottom: 7px; }
+pre { font-size:10pt; font-family: monospace; margin-top: 2px; margin-bottom: 7px; }
+ul, ol { font-size:10pt; font-family: sans-serif; padding-left: 20px; }
+code {white-space: nowrap;}
+
+h1 { font-size: 18pt; font-style: italic; font-weight: bold; color: #000000; padding-left: 5px; padding-right: 5px; padding-top: 10px; padding-bottom: 10px; text-align: left;  margin-top: 10px; margin-bottom: 20px; border-top: 4px solid #000000; border-bottom: 2px solid #000000; }
+h2 { font-size: 16pt; color: #000000; padding-top: 15px; padding-bottom: 2px; padding-left: 5px; padding-right: 5px; margin-top: 10px; margin-left: 0; margin-right: 0; margin-bottom: 5px; border-bottom: 2px solid #000000; }
+h3 { font-size: 12pt; color: #000000; margin-top:20px; margin-bottom: 5px; }
+h4 { font-size: 10pt; color: #000000; font-weight: bold; margin-top:5px;  margin-bottom: 5px; }
+hr { border: 1px solid #000000; }
+
+table,td,th { border: 1px solid #000000; padding: 2px; border-collapse: collapse; text-align: left; vertical-align: top; } 
+table { margin-bottom: 10px; margin-top: 10px;  }
+a:link { color: #1b449c; text-decoration: none; }
+a:hover { color: #1b449c; text-decoration: underline; }
+a[id]:hover { color: inherit; text-decoration: inherit; }
+
+table.detectors {width:900px;}
+table.detectors td {padding-left:5px;padding-right:5px;}
+table.detectors td:nth-child(1), table.detectors  td:nth-child(3) { white-space: nowrap;}
+table.detectors td:nth-child(2) {  max-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; width: 100%;}
+table.detectors td:nth-child(5) { text-align:center;}
+
+</style>
+</head>
+
+<body>
+<h1>TASKING TriCore v6.3r1 &nbsp;Inspector v1.0r8 Release Note</h1>
+
+<h2>Scope</h2>
+
+<p>This release note covers the initial features of the <i style="font-weight: bold;">TASKING TriCore v6.3r1 Inspector </i> <span style="font-weight: bold;">v1.0r8</span>.</p>
+
+<p>For release notes prior to v1.0r8, please visit the <a href="https://www.tasking.com/support/tasking-tricore-inspector">TASKING TriCore Inspector support website</a>.</p>
+
+<h2>Contents</h2>
+
+<ul>
+  <li><a href="#important_notices">Important Notices</a></li>
+  <li><a href="#build_numbers">Build Numbers</a></li>
+  <li><a href="#tool-qualification">Tool Qualification</a></li>
+  <li><a href="#base_features">Base Features</a></li>
+  <li><a href="#issues_v1.0r8">Issues Detected in v1.0r8</a></li>
+  <li><a href="#issues_not_detected">Issues Not Detected in v1.0r8</a></li>
+	<li><a href="#fixed_v1.0r8">Fixed Issues in v1.0r8</a></li>  
+  <li><a href="#license_information">License Information</a></li>
+</ul>
+
+<h2><a id="important_notices">Important Notices</a></h2>
+<p>TriCore v6.3r1 Inspector v1.0r8 is based on the TASKING VX-toolset for TriCore v6.3r1 patch 2.
+The Inspector operates identically to the VX-toolset (except for the issue detection) down to the linker.
+<p>Generation of the final executable image by the linker has been disabled.</p>
+<p>Components of the VX-toolset dealing with the final executable image, library sources and examples have been removed from the product.</p>
+<p>Components modified for the issue detection have been renamed with prefix <b>insp_</b> (insp_cctc, insp_cptc, insp_ctc, insp_astc, insp_ltc).</p>
+<p>You can use the TASKING Inspector v1.0r8 for the TASKING VX-toolset for TriCore v6.3r1 product and any of the patches, with the following restrictions:</p>
+<ul>
+<li>When you use the Inspector with the TriCore v6.3r1 product or with v6.3r1p1 applied, the Inspector does not detect issues fixed in TriCore v6.3r1p2.</li>
+<li>The level of confidence in the error detection of the Inspector is high if your software is compiled with the TASKING VX-toolset for TriCore v6.3r1p2 and degrades if other patch versions of the compiler are used.</li>
+</ul>
+<p>To avoid build errors, the Inspector tools since v1.0r6 do now also accept the devices TC32x, TC3Ex and TC37xEXT which are supported after v6.3r1 patch 2.</p>
+<p>The detector for issue TCVX-45218 has been improved since Inspector v1.0r7 to reduce the amount of false positives.</p>
+
+<h3>Introduced in Inspector v1.0r8</h3>
+<p>When MIL files (.mil, .ma, .ms) are identified, the Inspector C Compiler  will give a warning that it cannot detect issues that were already introduced during a previous C/C++ to MIL translation phase. Therefore it is recommended to disable MIL linking when using Inspector tools to get the most accurate results.
+</p>
+<p>The inspector will now also issue a message when there is no difference found after assembly comparison.</p>
+<p>New options have been added to run assembly comparison automatically after a potential detection, see <a href=#detection_asm>Detection by assembly comparison</a>.</p>
+<p>You can now disable all detectors for issues already fixed at a specified tool patch level, see <a href="#ignore_patchlevel">Ignore issues at a specific patch level</a>.</p>
+
+
+<h2><a id="build_numbers">Build Numbers</a></h2>
+<p>All executable files in this release have the following build number: Build 25101508.</p>
+
+<h2><a id="tool-qualification">Tool Qualification</a></h2>
+<p>A series of verifications and tests have been implemented for each detector to ensure they are suitable for their intended purpose. All these verifications and tests have successfully passed for this release.</p>
+
+<h2><a id="base_features">Base Features</a></h2>
+
+<h3><a id="detection_options">Detection options</a></h3>
+<p>By default, Inspector detects and reports full set of supported issues. The following options allow the user to customize this set:</p>
+<p><b>--ignore=&#60;issue-id&#62;,...</b> - disables detection of specified issues.</p>
+<p><b>--detect=&#60;issue-id&#62;,...</b> - disables detection of all issues and enables detection of specified issues only.</p>
+<p>These options are supported by the Control Program, C/C++ Compiler, Assembler and Linker. Issue ID corresponds to issue's identification on the TASKING Issues Portal.</p>
+
+<h3><a id="detection_messages">Detection messages</a></h3>
+<p>Inspector indicates issue detection by producing a warning message in the following ways:</p>
+<p><b>1. Definite detection.</b></p>
+<p>Reported when Inspector can guarantee by detector's construction that the processed code is affected by the triggered issue. 
+Note that the affected code may still be removed from the final executable image by subsequent optimizations or linker - this requires manual verification.</p>
+<p>Example: <code>ctc W999: [7/12] [INSP] detected occurrence of issue TCVX-44043.</code></p>
+<p><b>2. Potential detection.</b></p>
+<p>Reported when the issue is triggered, but Inspector cannot guarantee that the processed code has been affected. Location and/or some additional information will be reported to facilitate manual verification by the user.</p>
+<p>Example: <code>ltc W998: [2/51] [INSP] detected potential occurrence of issue TCVX-43994.</code></p>
+<p id="no_detection"><b>3. No detection.</b></p>
+<p>When no issues are detected and option <b>--msg-no-issues-detected</b> is specified.</p>
+<p>Example: <code>[INSP] No definite or potential issues detected for the enabled list of detectors</code></p>
+
+<h3><a id="detection_asm">Detection by assembly comparison</a></h3>
+<p>Some potential detectors produce a lot of false positives. To narrow the processing, assembly comparison mode is introduced.</p>
+<p><b>--detect-asm=&#60;issue-id&#62;</b> - with this option Inspector only detects a single specified issue.</p>
+<p>After initial potential detection Inspector generates two instances of the assembly code - affected and not affected by the issue.</p>
+<p>If the comparison of these generated assembly files produces any meaningful difference, Inspector reports it and indicates locations of the generated files for the further analysis.</p>
+<div>&nbsp;</div>
+<div><b>Automatically run assembly comparison for potential issues</b></div>
+<p>To automatically run an assembly comparison after a potential detection, you can use option <b>--compare-asm</b>.
+With this option you do not need to run option <b>--detect-asm</b> for the detected potential issues one by one yourself, 
+these are run automatically for the detectors which do support assembly comparison.</p>
+<p>The following two options give you more control over where to save the assembly comparison results:</p>
+<p><b>--compare-asm-subdir</b> - save assembly comparison results into subdirectories, one subdirectory for each input file.</p>
+<p><b>--compare-asm-directory=&lt;path&gt;</b> - specify directory for saving assembly comparison results, instead of the current working directory.</p>
+<div>&nbsp;</div>
+<p><b>Note:</b> When using the control program <code>insp_cctc</code> together with assembly comparison, it is recommended to also use option <b>--keep-temporary-files</b> (<b>-t</b>); otherwise, the assembly comparison files might be renamed and/or ending up in a temporary directory determined by the operating system.</p>
+
+<h3><a id="ignore_patchlevel">Ignore issues at a specific patch level</a></h3>
+<p>This option allows you to automatically ignore all detectors for issues already fixed at a specific patch level. 
+This is useful if you use a higher patch level to build your application than what the Inspector product is based on.</p>
+<p>For example: <b>--patch-level=10</b> - ignores detection of all issues fixed in TriCore v6.3r1 patch 10.</p>
+
+
+<h3><a id="insp_log">Message logging</a></h3>
+<p>Inspector supports separate logging of detection messages.</p>
+<p><b>--insp-log=&#60;file&#62;</b> - with this option all detection messages are redirected to the specified file.</p>
+<p>The log file is written in append mode and clearing it at the right moment is your responsibility.</p>
+<p>The logging mechanism supports concurrent writing for the multi-threaded build, but file locking over network is unreliable, so it should not be used with a remotely located log file.</p>
+
+<h2><a id="issues_v1.0r8">Issues Detected in v1.0r8</a></h2>
+<table class="detectors">
+<tbody>
+<tr><th>Detector</th><th>Summary</th><th>SIL<br>level</th><th>Inspector<br>component(s)</th><th>Assembly<br>comparison</th><th>Issue<br>detection</th><th>Fix<br>version</th></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-39025">TCVX-39025</a></td><td>LSL: prevent an allocation of the user stack in the PCP memory</td><td>SIL-2</td><td>insp_ltc</td><td style="text-align:center"></td><td>Definite</td><td> &nbsp; </td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-39753">TCVX-39753</a></td><td>Call graph not correct for aliases</td><td>SIL-2</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-40928">TCVX-40928</a></td><td>AURIX multi-core: hex file does not contain code for cloned functions in ROM</td><td>SIL-2</td><td>insp_ltc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p4</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-43123">TCVX-43123</a></td><td>Assembler astc --core=tc1.6.2 silently processed deprecated instruction mulms.h</td><td>SIL-2</td><td>insp_astc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p6</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-43994">TCVX-43994</a></td><td>Linker ltc allows duplicate interrupt vectors to be located in vector table</td><td>SIL-3</td><td>insp_ltc</td><td style="text-align:center"></td><td>Potential</td><td> &nbsp; </td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44071">TCVX-44071</a> +</td><td>Wrong SFR file definition for EMEM_SBRCTR register</td><td>SIL-2</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td> &nbsp; </td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44077">TCVX-44077</a></td><td>C compiler generates malloc call for variable length array</td><td>SIL-2</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td> &nbsp; </td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44201">TCVX-44201</a></td><td>Linker - clone .text .clone code sections missing in copytable when using --non-romable option</td><td>SIL-2</td><td>insp_ltc</td><td style="text-align:center"></td><td>Definite</td><td> &nbsp; </td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44224">TCVX-44224</a></td><td>Wrong result multiplying two INIFINITY values when using software floating-point library</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p4</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44231">TCVX-44231</a></td><td>Wrong sizeof result for atomic_flag type</td><td>SIL-3</td><td>insp_cptc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p4</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44237">TCVX-44237</a></td><td>Illegal double word access to SFR register range</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Potential</td><td>v6.3r1p4</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44245">TCVX-44245</a></td><td>C compiler: wrong code generation when using packed structures with members of 16-bit signed types</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p4</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44255">TCVX-44255</a></td><td>C compiler: wrong code generation when using packed structures with some members declared as bit fields</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Mixed</td><td>v6.3r1p4</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44257">TCVX-44257</a></td><td>Compiler violates EABI due to 4 byte user stack frame generation</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p4</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44267">TCVX-44267</a></td><td>Linker: option --whole-archive ignores object modules without exported symbols</td><td>SIL-2</td><td>insp_ltc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p7</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44278">TCVX-44278</a></td><td>C++ compiler: generated code results in address 0x0000000 access causing bus trap</td><td>SIL-2</td><td>insp_cptc</td><td style="text-align:center"></td><td>Potential</td><td>v6.2r2p5</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44309">TCVX-44309</a></td><td>MISRA C 2012 rule 10.4 checker reports false positive and fails to detect a violation</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p4</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44339">TCVX-44339</a></td><td>Subnormal values may incorrectly compare equal to zero</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p4</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44383">TCVX-44383</a></td><td>For non-trapping floating point comparisons: NaN == NaN incorrectly returns true</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p4</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44387">TCVX-44387</a></td><td>Erroneous code in code compaction function leads to invalid function parameter</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Potential</td><td>v6.3r1p4</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44393">TCVX-44393</a></td><td>Compiler issues double word accesses for data located in MCS memory</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p4</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44400">TCVX-44400</a></td><td>Wrong value is loaded into a 48-bit struct if used as a member of a larger 64-bit struct</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p4</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44407">TCVX-44407</a></td><td>C compiler front-end may produce imprecise FP result (±1 bit difference)</td><td>SIL-4</td><td>insp_ctc,<br>insp_ltc</td><td style="text-align:center">&#10004;</td><td>Potential</td><td>v6.3r1p4</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44417">TCVX-44417</a></td><td>Compiler generates wrong code for loops with 64-bit iterators</td><td>SIL-2</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p8</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44419">TCVX-44419</a></td><td>Linker does not insert alignment_protection section when copy_unit is greater than 1</td><td>SIL-2</td><td>insp_ltc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p4</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44421">TCVX-44421</a></td><td>Conversion of float to integer raises "Overflow" instead of "Invalid operation" exception</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p4</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44423">TCVX-44423</a></td><td>libfprt: subnormal values incorrectly compare equal to zero</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p4</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44426">TCVX-44426</a></td><td>FPU version of C library is not selected with control program option --fp-model=St</td><td>SIL-2</td><td>insp_cctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p6</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44437">TCVX-44437</a></td><td>Incorrect code for branch target align optimization when tail merging optimization active</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p4</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44441">TCVX-44441</a></td><td>Incorrect use of a loop instruction</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p5</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44443">TCVX-44443</a></td><td>Intrinsics __getbyteN and __gethwN may return wrong result</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p5</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44453">TCVX-44453</a></td><td>Incorrect propagation of __pure__ function call result</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p5</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44461">TCVX-44461</a></td><td>No error on narrowing conversion from char to bool</td><td>SIL-2</td><td>insp_cptc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p6</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44522">TCVX-44522</a></td><td>The __dsync() intrinsic does not always work as a memory fence</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Potential</td><td>v6.3r1p5</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44541">TCVX-44541</a></td><td>FP library: QNAN used in IEEE 754 arithmetic operations and in IEEE 754 unordered-quiet predicates leads to incorrect raising of FE_INVALID exception</td><td>SIL-2</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p6</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44545">TCVX-44545</a></td><td>Overlapping sections created when a reserved section is used with a memory fill entry</td><td>SIL-2</td><td>insp_ltc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44642">TCVX-44642</a></td><td>Common subexpression elimination optimization may violate #pragma STDC FENV_ACCESS ON</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p6</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44645">TCVX-44645</a></td><td>TriCore compiler may generate double word access instructions to peripheral memory</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td> &nbsp; </td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44670">TCVX-44670</a></td><td>Type conversions involving _Bool may produce wrong result</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Potential</td><td>v6.3r1p6</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44674">TCVX-44674</a></td><td>The address values for FFT Accelerator in register files for tc26xb are incorrect</td><td>SIL-2</td><td>insp_ctc,<br>insp_astc</td><td style="text-align:center"></td><td>Mixed</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44677">TCVX-44677</a></td><td>Erroneous code ignoring a break condition in an endless loop</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p6</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44684">TCVX-44684</a></td><td>Erroneous code generated using generic assembly code optimizations</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p6</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44711">TCVX-44711</a></td><td>Linker segmentation fault on very long symbol names</td><td>SIL-2</td><td>insp_ltc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44737">TCVX-44737</a></td><td>Compiler generates wrong code</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Potential</td><td>v6.3r1p6</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44738">TCVX-44738</a></td><td>C compiler: wrong code generation for float-to-int conversion when using #pragma STDC FENV_ACCESS ON: no FE_INVALID is raised</td><td>SIL-2</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Potential</td><td>v6.3r1p6</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44743">TCVX-44743</a></td><td>Control flow simplification optimization may violate #pragma STDC FENV_ACCESS ON</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Potential</td><td>v6.3r1p6</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44744">TCVX-44744</a></td><td>Constant propagation optimization may violate #pragma STDC FENV_ACCESS ON</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Potential</td><td>v6.3r1p6</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44751">TCVX-44751</a></td><td>Incorrect optimization of left-shift operator</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p6</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44753">TCVX-44753</a></td><td>Atomic load is removed in some cases</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p6</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44759">TCVX-44759</a></td><td>C compiler: incorrect optimization of conditional multiple variable access</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p5</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44769">TCVX-44769</a></td><td>Conversion double-to-float may produce 0 instead of FLT_MIN</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p8</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44776">TCVX-44776</a></td><td>Function @FLD accepts negative arguments with undefined behavior</td><td>SIL-2</td><td>insp_astc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p6</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44792">TCVX-44792</a></td><td>Erroneous code generation due to loop fusion optimization</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p6</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44793">TCVX-44793</a></td><td>C compiler: missing truncation for cast that is converted to _Bool</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Potential</td><td>v6.3r1p7</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44796">TCVX-44796</a></td><td>FPU instructions may corrupt 64-bit integer computations</td><td>SIL-4</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p6</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44802">TCVX-44802</a></td><td>Non EABI compliant bitfield offset used in a struct with a structsize larger than 32 bit</td><td>SIL-4</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Mixed</td><td>v6.3r1p6</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44808">TCVX-44808</a></td><td>C compiler: incorrect integer promotion using expression simplification optimization</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p6</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44817">TCVX-44817</a></td><td>DSP-C: operations on __sfract / __wrap __sfract may produce incorrect results</td><td>SIL-4</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p6</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44836">TCVX-44836</a></td><td>Missing zero-extend for indirect store to _Bool automatic variable</td><td>SIL-4</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p6</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44839">TCVX-44839</a></td><td>DSP-C: Constant folding involving fixed-point types may produce incorrect results</td><td>SIL-4</td><td>insp_ctc</td><td style="text-align:center"></td><td>Mixed</td><td>v6.3r1p8</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44840">TCVX-44840</a></td><td>C compiler: Incorrect CSE of VLA size expression</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p7</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44843">TCVX-44843</a></td><td>C compiler: unexpected "Assertion failed" when using _Alignas for an object with block scope</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p7</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44846">TCVX-44846</a></td><td>C compiler: flexible array member initialization: diagnostics may be missing</td><td>SIL-2</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44872">TCVX-44872</a></td><td>Compiler ignores variable value change after this has been passed by reference in a function call</td><td>SIL-4</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p6</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44878">TCVX-44878</a></td><td>Evaluation of floating expressions involving NaN may produce wrong results</td><td>SIL-4</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p8</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44901">TCVX-44901</a></td><td>Missing FE_INVALID exception on FP to integer conversions when FENV_ACCESS is ON</td><td>SIL-2</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p10</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44903">TCVX-44903</a></td><td>Compiler overwrites a complete byte in a bitstruct whereas only two bits are modified</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p7</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44907">TCVX-44907</a></td><td>Wrong code generation for an if-else statement</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44912">TCVX-44912</a></td><td>Optimization ignores __weak__ attribute in the code</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Potential</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44913">TCVX-44913</a></td><td>Erroneous code generated for C++ code using __disable_and_save and __restore intrinsics</td><td>SIL-4</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p7</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44935">TCVX-44935</a></td><td>User stack demand higher than calculated by the C compiler</td><td>SIL-2</td><td>insp_ltc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-44959">TCVX-44959</a></td><td>Control program: incorrect handling of -L option without argument</td><td>SIL-2</td><td>insp_cctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45024">TCVX-45024</a> +</td><td>Erroneous reserved size calculated in memory usage section</td><td>SIL-2</td><td>insp_ltc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45025">TCVX-45025</a></td><td>C Compiler: _Bool - incorrect expression evaluation</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45026">TCVX-45026</a></td><td>Compiler conducts a signed division instead of an unsigned one in a specific use case</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45028">TCVX-45028</a></td><td>C compiler ignores cast in a specific use case for a function return value</td><td>SIL-4</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Potential</td><td>v6.3r1p8</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45041">TCVX-45041</a></td><td>Erroneous code when loading a _Bool type variable into a char type using a _Bool pointer in an inline function</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45046">TCVX-45046</a></td><td>Incorrect SFR definition for register requiring 32-bit access leads to incorrect access to bit struct member</td><td>SIL-2</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45069">TCVX-45069</a></td><td>Flow optimization causes missing read operation</td><td>SIL-4</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p8</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45074">TCVX-45074</a></td><td>Wrong ABS pattern optimization for float or double</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45078">TCVX-45078</a></td><td>Incremental linking breaks weak definition replacement for references in same object file</td><td>SIL-2</td><td>insp_ltc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45080">TCVX-45080</a></td><td>Invalid strength reduction for subscript with unsigned wraparound</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p8</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45091">TCVX-45091</a></td><td>Wrong bit-field alignment for a short type member of a struct</td><td>SIL-4</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Mixed</td><td>v6.3r1p8</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45097">TCVX-45097</a></td><td>C compiler generates incorrect array index values</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p8</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45100">TCVX-45100</a></td><td>MISRA global rules are not checked when only one module is supplied</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p8</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45101">TCVX-45101</a></td><td>An atomic_flag type variable (stdatomic.h) ends up in cached memory</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p8</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45102">TCVX-45102</a></td><td>TriCore compiler does not warn about an extern __uncached__ variable declaration</td><td>SIL-2</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45104">TCVX-45104</a></td><td>Loop invariant code optimization issue</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p8</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45105">TCVX-45105</a></td><td>Wrong iterator values after jumping into loop</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p8</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45112">TCVX-45112</a></td><td>Memory access out of bounds due to a missing conversion of the loop increment</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p8</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45113">TCVX-45113</a></td><td>Signed instead of unsigned division/modulo</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p8</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45115">TCVX-45115</a></td><td>Erroneous code in a specific switch case</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Potential</td><td>v6.3r1p8</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45118">TCVX-45118</a></td><td>Forward store optimization for weak variable causes NULL pointer dereference</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p8</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45146">TCVX-45146</a></td><td>Compiler generates ld.da/st.da instructions for copying 8-byte structs in peripheral memory</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45186">TCVX-45186</a></td><td>Linker buffer overflow triggered by very long symbol names</td><td>SIL-2</td><td>insp_ltc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45188">TCVX-45188</a></td><td>Invalid floating-point transformation x - x == 0</td><td>SIL-2</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45198">TCVX-45198</a></td><td>C compiler: missing cast to short</td><td>SIL-2</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45201">TCVX-45201</a></td><td>Erroneous code due to a missing cast in a specific use case</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential*</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45204">TCVX-45204</a></td><td>Erroneous spilling of 64-bit variables</td><td>SIL-4</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45206">TCVX-45206</a></td><td>Incorrect sign extension for compound operation on bit-field with -OE and --eabi=CD</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Potential</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45209">TCVX-45209</a></td><td>Incorrect constant folding with __sat types</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Mixed</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45218">TCVX-45218</a></td><td>Erroneous code for do-while loop</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45233">TCVX-45233</a></td><td>Compiler ignores cast in a specific use case</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45234">TCVX-45234</a></td><td>C Compiler: initialization of an automatic struct member removed by optimizations</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Definite</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45238">TCVX-45238</a></td><td>C Compiler: incorrect optimization of cast operation from int to short</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential*</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45248">TCVX-45248</a></td><td>Loop with iterator wrap-around terminates prematurely</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45256">TCVX-45256</a></td><td>Wrong code generation when pure functions are used</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45269">TCVX-45269</a></td><td>Propagation error in some compile time constant computations involving loops with iterator wrap-around</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45284">TCVX-45284</a></td><td>Inter-core symbol reference to 'uncached' variable may get address in cached range</td><td>SIL-3</td><td>insp_ltc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p10</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45285">TCVX-45285</a></td><td>Read from union member incorrectly removed by optimization</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Potential</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45296">TCVX-45296</a></td><td>C Compiler: incorrect shift calculation for long long cast int</td><td>SIL-2</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45311">TCVX-45311</a></td><td>Packed structure is initialized with normal store instead of __unaligned store</td><td>SIL-2</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p10</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45333">TCVX-45333</a></td><td>C compiler : Aliasing not detected</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Potential</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45339">TCVX-45339</a></td><td>Missing cast to unsigned char</td><td>SIL-2</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45340">TCVX-45340</a></td><td>C compiler generates invalid arithmetic</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p9</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45343">TCVX-45343</a></td><td>Aliasing not detected for static variables</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Potential</td><td>v6.3r1p10</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45344">TCVX-45344</a></td><td>Wrong type conversion for signed/unsigned char data type</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential*</td><td>v6.3r1p10</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45345">TCVX-45345</a></td><td>Incorrect forward store optimization</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Mixed</td><td>v6.3r1p10</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45366">TCVX-45366</a></td><td>Incorrect aliasing analysis of restrict pointer expression after PRE</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p10</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45375">TCVX-45375</a> +</td><td>Erroneous struct size using __packed__ attribute in a type definition which uses bitfields</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Definite</td><td>v6.3r1p10</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45385">TCVX-45385</a> +</td><td>Linker: option --chip-output truncates data and code in hex files for successive memories</td><td>SIL-2</td><td>insp_ltc</td><td style="text-align:center"></td><td>Definite</td><td> &nbsp; </td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45396">TCVX-45396</a> +</td><td>C Compiler: Wrong constant propagation when aliasing</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Potential</td><td>v6.3r1p10</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45403">TCVX-45403</a> +</td><td>Aliasing not detected for static variables</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Potential</td><td>v6.3r1p10</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45406">TCVX-45406</a> +</td><td>Pointer argument wrongfully marked as restrict by the compiler</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Potential</td><td>v6.3r1p10</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45416">TCVX-45416</a> +</td><td>Incorrect assumption on sign/zero extension information</td><td>SIL-3</td><td>insp_ctc</td><td style="text-align:center"></td><td>Potential</td><td>v6.3r1p10</td></tr>
+<tr><td><a href="https://issues.tasking.com/?issueid=TCVX-45417">TCVX-45417</a> +</td><td>Undetected aliases generated by function calls on local pointers</td><td>SIL-4</td><td>insp_ctc</td><td style="text-align:center">&#10004;</td><td>Potential</td><td>v6.3r1p10</td></tr>
+</tbody>
+</table>
+
+<b>Notes</b>
+<ul>
+<li>Issue detection "Mixed" means: both "Definite" as well as "Potential" detection messages could be reported for that issue </li>
+<li>Available detectors for each tool are also listed if option --detect is used without an argument</li>
+<li>+) Detectors with a + prefix have been added in this release
+<li>*) The inspector will report the detection of TCVX-45201, TCVX-45238 and TCVX-45344 always together, 
+since these issues cannot be distinguished from each other. 
+Although the detectors are listed as Potential, as a group the detection will be Definite. 
+That means, at least one of the three issues triggered the detector definitely.</li>
+</ul>
+
+<h2><a id="issues_not_detected">Issues Not Detected in v1.0r8</a></h2>
+<ul>
+  <li><a href="http://issues.tasking.com/?issueid=TCVX-44325">TCVX-44325</a>
+- User stack pointer 4-byte aligned when interrupt occurs between FCALL and FRET</li>
+	<li><a href="http://issues.tasking.com/?issueid=TCVX-44047">TCVX-44047</a>
+- C compiler may leave empty .src file when it is killed</li>
+  <li><a href="http://issues.tasking.com/?issueid=TCVX-44577">TCVX-44577</a>
+- Wrong BMHDx_BMI masks for AURIX 2G in tc1v1_6_2.bmhd.lsl</li>
+	<li><a href="http://issues.tasking.com/?issueid=TCVX-44758">TCVX-44758</a>
+- FP operations involving INF or NAN inputs may produce wrong results with --fp-model=sT</li>
+  <li><a href="http://issues.tasking.com/?issueid=TCVX-44962">TCVX-44962</a> and <a href="http://issues.tasking.com/?issueid=TCVX-44835">TCVX-44835</a>
+- Struct alignments for bit-fields not always EABI compliant</li>
+  <li><a href="http://issues.tasking.com/?issueid=TCVX-44770">TCVX-44770</a> and <a href="http://issues.tasking.com/?issueid=TCVX-45075">TCVX-45075</a>
+- Non-trapping software-emulated floating-point operations do not handle exceptional results correctly</li>
+	<li><a href="http://issues.tasking.com/?issueid=TCVX-44891">TCVX-44891</a>
+- Software-emulated 32-bit floating-point multiplication may yield 0.0f instead of FLT_MIN</li>  
+	<li><a href="http://issues.tasking.com/?issueid=TCVX-45129">TCVX-45129</a>
+- Floating point comparison operations do not raise FE_INVALID when two NAN values are compared</li> 
+</ul>
+<p>These issues have been deemed impossible to detect in any meaningful way during compilation. User Guide contains a detailed description of the situation when the issue might occur and how to prevent it.</p>
+
+<h2><a id="fixed_v1.0r8">Fixed Issues in v1.0r8</a></h2>
+<ul>
+<li><a href="https://issues.tasking.com/?issueid=INSPTC63R1-39">INSPTC63R1-39</a>
+- Unexpected behavior of --detect-asm flag</li>
+</ul>
+
+<h2><a id="license_information">License Information</a></h2>
+
+<p>TASKING products are protected with TASKING license management software.</p>
+
+<h3>License key</h3>
+
+<p>You need a license key when you install a TASKING product on a computer. When you order a TASKING
+product from TASKING or one of its distributors, a license key will be sent to you by email or on paper.</p>
+
+<p>See the <a href="https://www.tasking.com/support/tlm">TASKING License Management (TLM) Support</a> page
+for information on obtaining a license.</p>
+
+<h3>Improved Verbose Logging</h3>
+<p>You can set the <code>TSK_LOG_VERBOSE</code> option in <code>licopt.txt</code>,
+or as an environment variable, to different verbose levels.</p>
+<p>With level 3 or higher, detailed license configuration information is shown, which
+is useful for debugging licensing problems. For example, it shows the environment variables
+or options used, the license key and the search path.</p>
+
+<h3>Support for wait for a free license</h3>
+<p>You can set the <code>TSK_LICENSE_WAIT</code> option in <code>licopt.txt</code> to a
+configurable time period to wait for a free license seat to become available instead of directly
+terminating when a license request is denied.</p>
+<p>See section <a href="https://www.tasking.com/documentation/licensing/#t=tlm%2Flicense_wait.html">Wait for a Free License</a> in the TASKING License Management online documentation.</p>
+
+<h3>Wait for Available Process</h3>
+<p>If your license specifies a maximum number of processes you are allowed to use,
+you can set the <code>TSK_PROCESS_WAIT</code> option in <code>licopt.txt</code>,
+or as an environment variable, to the parallel process time-out (default: unlimited).
+This specifies the number of seconds the system is allowed to wait for a process to
+run if the maximum number of parallel processes permitted by the license is already
+running.</p>
+
+<br>
+<hr>
+</body>
+</html>
