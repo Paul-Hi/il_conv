@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: ["main", "feature_*", "fix_*"]
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  test:
+    name: Tests (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run tests (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          python -m coverage run -m unittest discover \
+            --start-directory tests \
+            --pattern "test_*.py" \
+            --top-level-directory .
+          python -m coverage report
+
+      - name: Run tests (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        # Change to %TEMP% so SQLite files are on the Windows filesystem,
+        # avoiding locking issues when running from a network/WSL path.
+        run: |
+          cd /d %TEMP%
+          python -m coverage erase
+          python -m coverage run --rcfile="${{ github.workspace }}\.coveragerc" -m unittest discover ^
+            --start-directory "${{ github.workspace }}\tests" ^
+            --pattern "test_*.py" ^
+            --top-level-directory "${{ github.workspace }}"
+          python -m coverage report --rcfile="${{ github.workspace }}\.coveragerc"
