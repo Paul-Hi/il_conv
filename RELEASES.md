@@ -3,6 +3,7 @@
 </p>
 
 # * unreleased *
+# *New* Version: v3.0beta4
 - Add: Public release notes of TASKING Inspector from vendor Website
 - Add: Simple public test for release note parsing. 
 - Add: Simple public test using test.log 
@@ -10,9 +11,7 @@
 - Fix: Python 3.12 compatiblity on none-privat tests
 - Add: github CI build on push
 - Add: github release build on PR merged to master or 
-  git tag v<version> && git push origin v<version>
-
-# *New* Version: v3.0 beta3
+       git tag v<version> && git push origin v<version>
 - Add;      Vibe code unit & integration tests (partially privat test data not commited to OSS).
 - Modified: Correct RegExp handling in general and improve info verbose logging
 - Modified: RegExp to parse new inspector log messages incl. dir/affect/unaffect when assembly is different
