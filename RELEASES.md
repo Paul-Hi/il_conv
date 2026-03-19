@@ -3,7 +3,9 @@
 </p>
 
 # * unreleased *
-*
+- Add: github CI build on push
+- Add: github release build on PR merged to master or 
+  git tag v<version> && git push origin v<version>
 
 # *New* Version: v3.0 beta3
 - Add;      Vibe code unit & integration tests (partially privat test data not commited to OSS).
