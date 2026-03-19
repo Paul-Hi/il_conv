@@ -13,73 +13,10 @@ permissions:
 
 jobs:
   build:
-    name: Build (${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-            artifact_name: il_conv
-            asset_name: il_conv-linux-x64
-          - os: windows-latest
-            artifact_name: il_conv.exe
-            asset_name: il_conv-windows-x64.exe
-
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version: "3.12"
-
-      - name: Install runtime dependencies
-        run: pip install -r requirements.txt
-
-      - name: Install Nuitka and build dependencies
-        run: |
-          pip install nuitka ordered-set zstandard
-
-      - name: Install C compiler (Linux)
-        if: runner.os == 'Linux'
-        run: sudo apt-get install -y gcc patchelf
-
-      - name: Add MinGW64 to PATH (Windows)
-        if: runner.os == 'Windows'
-        run: echo "C:\msys64\mingw64\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
-
-      - name: Build with Nuitka (Linux)
-        if: runner.os == 'Linux'
-        run: >
-          python -m nuitka
-          --include-data-file=res/default.css=res/default.css
-          --include-data-file=res/functions.js=res/functions.js
-          --include-data-file=res/logo_base64.txt=res/logo_base64.txt
-          --include-data-file=res/logo.png=res/logo.png
-          --onefile
-          --assume-yes-for-downloads
-          il_conv.py
-
-      - name: Build with Nuitka (Windows)
-        if: runner.os == 'Windows'
-        run: >
-          python -m nuitka
-          --include-data-file=res/default.css=res/default.css
-          --include-data-file=res/functions.js=res/functions.js
-          --include-data-file=res/logo_base64.txt=res/logo_base64.txt
-          --include-data-file=res/logo.png=res/logo.png
-          --onefile
-          --mingw64
-          --assume-yes-for-downloads
-          il_conv.py
-
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ matrix.asset_name }}
-          path: ${{ matrix.artifact_name }}
-          if-no-files-found: error
+    uses: ./.github/workflows/build-nuitka.yml
+    with:
+      artifact_suffix: ${{ github.ref_name }}
+      retention_days: 90
 
   release:
     name: Create GitHub Release
@@ -99,5 +36,5 @@ jobs:
           name: "il_conv ${{ github.ref_name }}"
           generate_release_notes: true
           files: |
-            dist/il_conv-linux-x64/il_conv
-            dist/il_conv-windows-x64.exe/il_conv.exe
+            dist/il_conv-linux-x64-${{ github.ref_name }}/il_conv
+            dist/il_conv-windows-x64.exe-${{ github.ref_name }}/il_conv.exe
