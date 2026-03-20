@@ -1,5 +1,7 @@
 <p>
   <img src="res/logo.png" width="20%">
+
+  [![CI](https://github.com/Paul-Hi/il_conv/actions/workflows/ci.yml/badge.svg)](https://github.com/Paul-Hi/il_conv/actions/workflows/ci.yml)
 </p>
 
 # *New* Version: v3.0beta4
