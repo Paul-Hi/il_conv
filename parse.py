@@ -154,8 +154,9 @@ class LogDB(object):
         self._create_tables()
 
     def __del__(self):
-        if self.conn:
-            self.conn.close()
+        conn = getattr(self, "conn", None)
+        if conn:
+            conn.close()
 
     def _create_tables(self):
         cols = ",".join(
@@ -233,7 +234,7 @@ class LogDB(object):
         if not lines:
             if self.verbose:
                 print("ERROR: No input in passed log file!")
-            return 0
+            return
 
         if self.verbose:
             print("INFO: Parse log file information!")
@@ -278,8 +279,7 @@ class LogDB(object):
                         "d;-"  # normal detection, no assembly comparison available
                     )
                 else:
-                    detectiontype = ("?,?")
-                    assert False, "ERROR: Script is wrong - no unclear result possible!"
+                    raise RuntimeError("ERROR: Script is wrong - no unclear result possible!")
                     
                 issueid = match.group("issueid").strip()
                 extension = match.group("extension").strip()

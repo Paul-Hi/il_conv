@@ -125,6 +125,7 @@ In case you wanna *use* the python scripts, you have to at least install python 
 - ~~requests~~
 - ~~numpy~~
 - ~~datatable~~
+- coverage (for development/testing)
 
 In case you wanna build the scripts into a onefile executabe
 - nuitka based - supported (see create_nuitka_exe.bat on windows)
