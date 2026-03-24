@@ -90,9 +90,10 @@ def generateHTML(
     tr_tds_rows = ""
     for fn, fp, id, line, column, detection in curs:
         ii = db.get_issue(id)
-        assert (
-            ii is not None
-        ), f"ERRRO: Log includes detected issue id but we have no information about it.\n{id} {fp} line"
+        if ii is None:
+            raise ValueError(
+                f"ERROR: Log includes detected issue id but we have no information about it.\n{id} {fp} line"
+            )
         detection = detection.replace("potential affected", "p")
         detection = detection.replace("affected", "d")
         raw = map(

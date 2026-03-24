@@ -123,7 +123,7 @@ class IssueDB(object):
         inspector_version: str,
         xmlfile: Path,
         relnotefile: Path,
-        verbose: False,
+        verbose: bool = False,
     ):
 
         self.compiler_version = compiler_version
@@ -137,8 +137,9 @@ class IssueDB(object):
         self._create_tables()
 
     def __del__(self):
-        if self.conn:
-            self.conn.close()
+        conn = getattr(self, "conn", None)
+        if conn:
+            conn.close()
 
     def _create_tables(self):
         # create ReleaseNoteIssue table
@@ -202,7 +203,7 @@ class IssueDB(object):
             int: return number of inserted release note issues / inspector detectors
         """
 
-        input = ""
+        content = ""
 
         if self.relnotefile is not None:
             if self.verbose:
@@ -212,16 +213,16 @@ class IssueDB(object):
                     + "'"
                 )
             with open(self.relnotefile) as fp:
-                input = fp.read()
+                content = fp.read()
 
-        if not input:
+        if not content:
             if self.verbose:
                 print("ERROR: No input in passed release notes file!")
             return 0
         if self.verbose:
             print("INFO: Import issue information")
 
-        soup = BeautifulSoup(input, "html.parser")
+        soup = BeautifulSoup(content, "html.parser")
         title_tag = soup.title
         if title_tag is None:
             raise ValueError(
@@ -305,7 +306,7 @@ class IssueDB(object):
         Note: XML export from portal includes no 'closed' ticket information = won't fix or dublicated
         """
 
-        input = ""
+        content = ""
 
         if self.xmlfile is not None:
             if self.verbose:
@@ -315,16 +316,16 @@ class IssueDB(object):
                     + "'"
                 )
             with open(self.xmlfile, encoding="utf-8") as fp:
-                input = fp.read()
+                content = fp.read()
 
-        if not input:
+        if not content:
             if self.verbose:
                 print("ERROR: No input in passed XML issue portal export file file!")
             return 0
         if self.verbose:
             print("INFO: Import detector / issue information.")
 
-        soup = BeautifulSoup(input, "xml")
+        soup = BeautifulSoup(content, "xml")
         pv_tag = soup.find("product_version")
         if pv_tag is None:
             raise ValueError("ERROR: XML file is missing required <product_version> tag")
@@ -396,7 +397,7 @@ class IssueDB(object):
 
     def get_list_of_detectable_issues(self) -> list:
         self.cur.execute("SELECT id FROM ReleaseNoteIssues ORDER BY id")
-        return [id[0] for (id) in self.cur.fetchall()]
+        return [row[0] for row in self.cur.fetchall()]
 
     def get_portal_issue(self, id: str) -> PortalIssue:
         """Search issue id in passed dataframe.

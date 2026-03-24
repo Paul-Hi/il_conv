@@ -326,7 +326,6 @@ def _addOneSheet(
     img.width = 48
     img.height = 48
     ws.add_image(img)
-    openpyxl.comments.Comment
 
     ws.row_dimensions[1].height = 40
     ws["D1"].alignment = Alignment(vertical="center")
@@ -363,7 +362,6 @@ def generateExcel(
     img.width = 64
     img.height = 64
     ws.add_image(img)
-    openpyxl.comments.Comment
 
     ws.row_dimensions[1].height = 54
     ws["B1"].alignment = Alignment(vertical="center")
