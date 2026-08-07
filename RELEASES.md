@@ -3,7 +3,12 @@
 </p>
 
 # * unreleased *
-# *New* Version: v3.0beta4
+# *New* Version: v3.0beta5
+- Update: All references and examples now use the latest TASKING Inspector release notes v1.0r9 (v6.2r2 and v6.3r1); public tests updated accordingly.
+- Fix: GitHub Releases now attach a working Linux onefile binary (il_conv-linux-x64) and the Windows onefile binary (il_conv-windows-x64.exe). Previously the Linux asset was not attached due to a naming mismatch.
+- Fix: CI and Nuitka build run on ubuntu-22.04 (Linux) and windows-latest (Windows).
+
+# Version: v3.0beta4
 - Add: Public release notes of TASKING Inspector from vendor Website
 - Add: Simple public test for release note parsing. 
 - Add: Simple public test using test.log 

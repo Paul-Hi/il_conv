@@ -33,10 +33,10 @@ from parse import LogDB
 _HERE = Path(__file__).parent.parent  # project root
 
 XML_V63R1   = _HERE / "XML"          / "issues_tasking_TCVX_v6.3r1.xml"
-RN_V63_V108 = _HERE / "RELEASENOTES" / "readme_tricore_v6.3r1_inspector_v1.0r8.html"
+RN_V63_V109 = _HERE / "RELEASENOTES" / "readme_tricore_v6.3r1_inspector_v1.0r9.html"
 
-_HAVE_DATA = XML_V63R1.exists() and RN_V63_V108.exists()
-_SKIP = unittest.skipUnless(_HAVE_DATA, "Local v6.3r1 / v1.0r8 test data not available")
+_HAVE_DATA = XML_V63R1.exists() and RN_V63_V109.exists()
+_SKIP = unittest.skipUnless(_HAVE_DATA, "Local v6.3r1 / v1.0r9 test data not available")
 
 
 # ---------------------------------------------------------------------------
@@ -89,7 +89,7 @@ def _col_index(ws, header_row: int, name: str) -> int:
     raise KeyError(f"Column '{name}' not found in row {header_row}")
 
 
-# Issue IDs present in both v6.3r1 XML and v1.0r8 release note
+# Issue IDs present in both v6.3r1 XML and v1.0r9 release note
 _ID_POTENTIAL    = "TCVX-39753"   # Potential / insp_ctc
 _ID_DEFINITE     = "TCVX-39025"   # Definite  / insp_ltc
 _ID_ASM_NOCHANGE = "TCVX-40928"   # Potential / insp_ltc — used for W981 (p;n)
@@ -106,7 +106,7 @@ class TestGenerateExcelBasic(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.db = IssueDB("v6.3r1", "v1.0r8", XML_V63R1, RN_V63_V108, verbose=False)
+        cls.db = IssueDB("v6.3r1", "v1.0r9", XML_V63R1, RN_V63_V109, verbose=False)
         cls.db.import_release_note()
         cls.db.import_xml_file()
 
@@ -127,7 +127,7 @@ class TestGenerateExcelBasic(unittest.TestCase):
         _close_db(cls.db)
         del cls.db
         gc.collect()
-        _remove_db("v6.3r1", "v1.0r8")
+        _remove_db("v6.3r1", "v1.0r9")
         os.unlink(cls._log)
         os.unlink(cls._xlsx)
 
@@ -245,7 +245,7 @@ class TestGenerateExcelVerbose(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.db = IssueDB("v6.3r1", "v1.0r8", XML_V63R1, RN_V63_V108, verbose=False)
+        cls.db = IssueDB("v6.3r1", "v1.0r9", XML_V63R1, RN_V63_V109, verbose=False)
         cls.db.import_release_note()
         cls.db.import_xml_file()
         cls._log = _write_tmp(
@@ -259,7 +259,7 @@ class TestGenerateExcelVerbose(unittest.TestCase):
         _close_db(cls.db)
         del cls.db
         gc.collect()
-        _remove_db("v6.3r1", "v1.0r8")
+        _remove_db("v6.3r1", "v1.0r9")
         os.unlink(cls._log)
 
     def test_verbose_prints_info(self):
@@ -277,7 +277,7 @@ class TestGenerateExcelAsmDetections(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.db = IssueDB("v6.3r1", "v1.0r8", XML_V63R1, RN_V63_V108, verbose=False)
+        cls.db = IssueDB("v6.3r1", "v1.0r9", XML_V63R1, RN_V63_V109, verbose=False)
         cls.db.import_release_note()
         cls.db.import_xml_file()
 
@@ -298,7 +298,7 @@ class TestGenerateExcelAsmDetections(unittest.TestCase):
         _close_db(cls.db)
         del cls.db
         gc.collect()
-        _remove_db("v6.3r1", "v1.0r8")
+        _remove_db("v6.3r1", "v1.0r9")
         os.unlink(cls._log)
         os.unlink(cls._xlsx)
 
@@ -330,7 +330,7 @@ class TestGenerateExcelDuplicateFilename(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.db = IssueDB("v6.3r1", "v1.0r8", XML_V63R1, RN_V63_V108, verbose=False)
+        cls.db = IssueDB("v6.3r1", "v1.0r9", XML_V63R1, RN_V63_V109, verbose=False)
         cls.db.import_release_note()
         cls.db.import_xml_file()
 
@@ -347,7 +347,7 @@ class TestGenerateExcelDuplicateFilename(unittest.TestCase):
         _close_db(cls.db)
         del cls.db
         gc.collect()
-        _remove_db("v6.3r1", "v1.0r8")
+        _remove_db("v6.3r1", "v1.0r9")
         os.unlink(cls._log)
 
     def test_duplicate_filename_triggers_warn(self):
@@ -365,7 +365,7 @@ class TestAddOneSheetErrors(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.db = IssueDB("v6.3r1", "v1.0r8", XML_V63R1, RN_V63_V108, verbose=False)
+        cls.db = IssueDB("v6.3r1", "v1.0r9", XML_V63R1, RN_V63_V109, verbose=False)
         cls.db.import_release_note()
         cls.db.import_xml_file()
 
@@ -374,7 +374,7 @@ class TestAddOneSheetErrors(unittest.TestCase):
         _close_db(cls.db)
         del cls.db
         gc.collect()
-        _remove_db("v6.3r1", "v1.0r8")
+        _remove_db("v6.3r1", "v1.0r9")
 
     def _log_db_with(self, line: str) -> tuple[LogDB, str]:
         path = _write_tmp(line)

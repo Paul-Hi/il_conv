@@ -19,8 +19,8 @@ from issuedb import IssueDB, ReleaseNoteIssue
 
 _HERE = Path(__file__).parent.parent  # project root
 
-RN_V63_V108 = _HERE / "RELEASENOTES" / "readme_tricore_v6.3r1_inspector_v1.0r8.html"
-RN_V62_V108 = _HERE / "RELEASENOTES" / "readme_tricore_v6.2r2_inspector_v1.0r8.html"
+RN_V63_V109 = _HERE / "RELEASENOTES" / "readme_tricore_v6.3r1_inspector_v1.0r9.html"
+RN_V62_V109 = _HERE / "RELEASENOTES" / "readme_tricore_v6.2r2_inspector_v1.0r9.html"
 
 # Known issue present in v6.3r1 release note
 _KNOWN_ID_V63 = "TCVX-39753"
@@ -54,20 +54,20 @@ def _remove_db(compiler_ver: str, inspector_ver: str):
 
 
 # ---------------------------------------------------------------------------
-# Tests — v6.3r1 / Inspector v1.0r8
+# Tests — v6.3r1 / Inspector v1.0r9
 # ---------------------------------------------------------------------------
 
 class TestReleaseNoteImportV63(unittest.TestCase):
     """import_release_note happy-path for v6.3r1."""
 
     def setUp(self):
-        self.db = _make_db("v6.3r1", "v1.0r8", RN_V63_V108)
+        self.db = _make_db("v6.3r1", "v1.0r9", RN_V63_V109)
 
     def tearDown(self):
         _close_db(self.db)
         del self.db
         gc.collect()
-        _remove_db("v6.3r1", "v1.0r8")
+        _remove_db("v6.3r1", "v1.0r9")
 
     def test_import_returns_positive_count(self):
         count = self.db.import_release_note()
@@ -87,7 +87,7 @@ class TestReleaseNoteGettersV63(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.db = _make_db("v6.3r1", "v1.0r8", RN_V63_V108)
+        cls.db = _make_db("v6.3r1", "v1.0r9", RN_V63_V109)
         cls.db.import_release_note()
 
     @classmethod
@@ -95,7 +95,7 @@ class TestReleaseNoteGettersV63(unittest.TestCase):
         _close_db(cls.db)
         del cls.db
         gc.collect()
-        _remove_db("v6.3r1", "v1.0r8")
+        _remove_db("v6.3r1", "v1.0r9")
 
     def test_get_known_issue(self):
         ri = self.db.get_release_note_issue(_KNOWN_ID_V63)
@@ -134,11 +134,11 @@ class TestReleaseNoteErrorsV63(unittest.TestCase):
     """Error paths: version mismatch and None input."""
 
     def tearDown(self):
-        _remove_db("v6.3r1", "v1.0r8")
-        _remove_db("v6.2r2", "v1.0r8")
+        _remove_db("v6.3r1", "v1.0r9")
+        _remove_db("v6.2r2", "v1.0r9")
 
     def test_wrong_compiler_version_raises(self):
-        db = _make_db("v6.3r1", "v1.0r8", RN_V62_V108)
+        db = _make_db("v6.3r1", "v1.0r9", RN_V62_V109)
         try:
             with self.assertRaises(ValueError):
                 db.import_release_note()
@@ -147,7 +147,7 @@ class TestReleaseNoteErrorsV63(unittest.TestCase):
             gc.collect()
 
     def test_releasenote_none_returns_zero(self):
-        db = _make_db("v6.3r1", "v1.0r8", None)
+        db = _make_db("v6.3r1", "v1.0r9", None)
         try:
             self.assertEqual(db.import_release_note(), 0)
         finally:
@@ -156,7 +156,7 @@ class TestReleaseNoteErrorsV63(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Tests — v6.2r2 / Inspector v1.0r8
+# Tests — v6.2r2 / Inspector v1.0r9
 # ---------------------------------------------------------------------------
 
 class TestReleaseNoteImportV62(unittest.TestCase):
@@ -164,7 +164,7 @@ class TestReleaseNoteImportV62(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.db = _make_db("v6.2r2", "v1.0r8", RN_V62_V108)
+        cls.db = _make_db("v6.2r2", "v1.0r9", RN_V62_V109)
         cls.rn_count = cls.db.import_release_note()
 
     @classmethod
@@ -172,7 +172,7 @@ class TestReleaseNoteImportV62(unittest.TestCase):
         _close_db(cls.db)
         del cls.db
         gc.collect()
-        _remove_db("v6.2r2", "v1.0r8")
+        _remove_db("v6.2r2", "v1.0r9")
 
     def test_import_returns_positive_count(self):
         self.assertGreater(self.rn_count, 0)

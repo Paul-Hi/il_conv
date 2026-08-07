@@ -25,11 +25,11 @@ _HERE = Path(__file__).parent.parent  # project root
 
 XML_V63R1   = _HERE / "XML"          / "issues_tasking_TCVX_v6.3r1.xml"
 XML_V62R2   = _HERE / "XML"          / "issues_tasking_TCVX_v6.2r2.xml"
-RN_V63_V108 = _HERE / "RELEASENOTES" / "readme_tricore_v6.3r1_inspector_v1.0r8.html"
-RN_V62_V107 = _HERE / "RELEASENOTES" / "readme_tricore_v6.2r2_inspector_v1.0r7.html"
+RN_V63_V109 = _HERE / "RELEASENOTES" / "readme_tricore_v6.3r1_inspector_v1.0r9.html"
+RN_V62_V109 = _HERE / "RELEASENOTES" / "readme_tricore_v6.2r2_inspector_v1.0r9.html"
 
-_HAVE_V63 = XML_V63R1.exists() and RN_V63_V108.exists()
-_HAVE_V62 = XML_V62R2.exists() and RN_V62_V107.exists()
+_HAVE_V63 = XML_V63R1.exists() and RN_V63_V109.exists()
+_HAVE_V62 = XML_V62R2.exists() and RN_V62_V109.exists()
 
 _SKIP_V63 = unittest.skipUnless(_HAVE_V63, "Local v6.3r1 test data not available")
 _SKIP_V62 = unittest.skipUnless(_HAVE_V62, "Local v6.2r2 test data not available")
@@ -60,7 +60,7 @@ def _remove_db(compiler_ver: str, inspector_ver: str):
 
 
 # ---------------------------------------------------------------------------
-# Tests — v6.3r1 / Inspector v1.0r8
+# Tests — v6.3r1 / Inspector v1.0r9
 # ---------------------------------------------------------------------------
 
 @_SKIP_V63
@@ -68,13 +68,13 @@ class TestIssueDBImport(unittest.TestCase):
     """import_release_note and import_xml_file happy-path tests."""
 
     def setUp(self):
-        self.db = _make_db("v6.3r1", "v1.0r8", XML_V63R1, RN_V63_V108)
+        self.db = _make_db("v6.3r1", "v1.0r9", XML_V63R1, RN_V63_V109)
 
     def tearDown(self):
         _close_db(self.db)
         del self.db
         gc.collect()
-        _remove_db("v6.3r1", "v1.0r8")
+        _remove_db("v6.3r1", "v1.0r9")
 
     def test_import_release_note_returns_positive_count(self):
         count = self.db.import_release_note()
@@ -101,7 +101,7 @@ class TestIssueDBGetters(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.db = _make_db("v6.3r1", "v1.0r8", XML_V63R1, RN_V63_V108)
+        cls.db = _make_db("v6.3r1", "v1.0r9", XML_V63R1, RN_V63_V109)
         cls.db.import_release_note()
         cls.db.import_xml_file()
 
@@ -110,7 +110,7 @@ class TestIssueDBGetters(unittest.TestCase):
         _close_db(cls.db)
         del cls.db
         gc.collect()
-        _remove_db("v6.3r1", "v1.0r8")
+        _remove_db("v6.3r1", "v1.0r9")
 
     # --- get_release_note_issue ---
 
@@ -188,13 +188,13 @@ class TestIssueDBErrorHandling(unittest.TestCase):
     """Version mismatch and empty-input error paths."""
 
     def tearDown(self):
-        _remove_db("v6.3r1", "v1.0r8")
-        _remove_db("v6.2r2", "v1.0r7")
+        _remove_db("v6.3r1", "v1.0r9")
+        _remove_db("v6.2r2", "v1.0r9")
 
     def test_wrong_compiler_version_in_xml_raises(self):
         if not XML_V62R2.exists():
             self.skipTest("v6.2r2 XML not available")
-        db = _make_db("v6.3r1", "v1.0r8", XML_V62R2, RN_V63_V108)
+        db = _make_db("v6.3r1", "v1.0r9", XML_V62R2, RN_V63_V109)
         try:
             with self.assertRaises(ValueError):
                 db.import_xml_file()
@@ -203,9 +203,9 @@ class TestIssueDBErrorHandling(unittest.TestCase):
             gc.collect()
 
     def test_wrong_compiler_version_in_releasenote_raises(self):
-        if not RN_V62_V107.exists():
+        if not RN_V62_V109.exists():
             self.skipTest("v6.2r2 release note not available")
-        db = _make_db("v6.3r1", "v1.0r8", XML_V63R1, RN_V62_V107)
+        db = _make_db("v6.3r1", "v1.0r9", XML_V63R1, RN_V62_V109)
         try:
             with self.assertRaises(ValueError):
                 db.import_release_note()
@@ -214,7 +214,7 @@ class TestIssueDBErrorHandling(unittest.TestCase):
             gc.collect()
 
     def test_xml_none_returns_zero(self):
-        db = _make_db("v6.3r1", "v1.0r8", None, RN_V63_V108)
+        db = _make_db("v6.3r1", "v1.0r9", None, RN_V63_V109)
         try:
             self.assertEqual(db.import_xml_file(), 0)
         finally:
@@ -222,7 +222,7 @@ class TestIssueDBErrorHandling(unittest.TestCase):
             gc.collect()
 
     def test_releasenote_none_returns_zero(self):
-        db = _make_db("v6.3r1", "v1.0r8", XML_V63R1, None)
+        db = _make_db("v6.3r1", "v1.0r9", XML_V63R1, None)
         try:
             self.assertEqual(db.import_release_note(), 0)
         finally:
@@ -231,7 +231,7 @@ class TestIssueDBErrorHandling(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# Tests — v6.2r2 / Inspector v1.0r7
+# Tests — v6.2r2 / Inspector v1.0r9
 # ---------------------------------------------------------------------------
 
 @_SKIP_V62
@@ -240,7 +240,7 @@ class TestIssueDBV62R2(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        cls.db = _make_db("v6.2r2", "v1.0r7", XML_V62R2, RN_V62_V107)
+        cls.db = _make_db("v6.2r2", "v1.0r9", XML_V62R2, RN_V62_V109)
         cls.rn_count = cls.db.import_release_note()
         cls.xml_count = cls.db.import_xml_file()
 
@@ -249,7 +249,7 @@ class TestIssueDBV62R2(unittest.TestCase):
         _close_db(cls.db)
         del cls.db
         gc.collect()
-        _remove_db("v6.2r2", "v1.0r7")
+        _remove_db("v6.2r2", "v1.0r9")
 
     def test_release_note_loaded(self):
         self.assertGreater(self.rn_count, 0)

@@ -36,5 +36,5 @@ jobs:
           name: "il_conv ${{ github.ref_name }}"
           generate_release_notes: true
           files: |
-            dist/il_conv-linux-x64-${{ github.ref_name }}/il_conv
-            dist/il_conv-windows-x64.exe-${{ github.ref_name }}/il_conv.exe
+           dist/il_conv-linux-x64-ubuntu-22.04-${{ github.ref_name }}/il_conv-linux-x64
+           dist/il_conv-windows-x64.exe-${{ github.ref_name }}/il_conv-windows-x64.exe

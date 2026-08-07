@@ -7,4 +7,4 @@ Copyright (C) 2024 Peter Himmler
 Apache License 2.0
 """
 
-VERSION_STR = "v3.0beta4"
+VERSION_STR = "v3.0beta5"

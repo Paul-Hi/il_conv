@@ -59,7 +59,7 @@ Runs the full test suite with coverage on both platforms:
 
 | Runner | Shell | Notes |
 |---|---|---|
-| `ubuntu-latest` | bash | Runs from the project root; `.coveragerc` auto-discovered |
+| `ubuntu-22.04` | bash | Runs from the project root; `.coveragerc` auto-discovered |
 | `windows-latest` | cmd | Runs from `%TEMP%` to avoid SQLite locking issues; `--rcfile` passed explicitly |
 
 No manual action needed — the workflow runs automatically on every push.
@@ -78,7 +78,7 @@ git push origin v3.0
 
 | Platform | Runner | Release asset |
 |---|---|---|
-| Linux | `ubuntu-latest` | `il_conv-linux-x64` |
+| Linux | `ubuntu-22.04` | `il_conv-linux-x64` |
 | Windows | `windows-latest` | `il_conv-windows-x64.exe` |
 
 The GitHub Release is created automatically with:
@@ -98,7 +98,7 @@ feature or fix branch before tagging a release.
 2. Enter the branch name (default: `main`)
 3. Click **Run workflow**
 
-Artifacts are uploaded with a branch-specific name (`il_conv-linux-x64-<branch>`,
+Artifacts are uploaded with a branch-specific name (`il_conv-linux-x64-ubuntu-22.04-<branch>`,
 `il_conv-windows-x64.exe-<branch>`) and kept for **30 days**.
 No GitHub Release is created.
 

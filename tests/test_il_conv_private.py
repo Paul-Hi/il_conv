@@ -30,11 +30,11 @@ from il_conv import il_conv
 _HERE = Path(__file__).parent.parent  # project root
 
 XML_V63R1   = _HERE / "XML"          / "issues_tasking_TCVX_v6.3r1.xml"
-RN_V63_V108 = _HERE / "RELEASENOTES" / "readme_tricore_v6.3r1_inspector_v1.0r8.html"
+RN_V63_V109 = _HERE / "RELEASENOTES" / "readme_tricore_v6.3r1_inspector_v1.0r9.html"
 TEST_LOG    = _HERE / "test.log"
 
-_HAVE_DATA = XML_V63R1.exists() and RN_V63_V108.exists() and TEST_LOG.exists()
-_SKIP = unittest.skipUnless(_HAVE_DATA, "Local v6.3r1 / v1.0r8 test data or test.log not available")
+_HAVE_DATA = XML_V63R1.exists() and RN_V63_V109.exists() and TEST_LOG.exists()
+_SKIP = unittest.skipUnless(_HAVE_DATA, "Local v6.3r1 / v1.0r9 test data or test.log not available")
 
 # il_conv derives inspector_version = "v1.0" from the release note filename
 _DB_FILE = "issues-v6.3r1-v1.0.db"
@@ -56,7 +56,7 @@ def _run_il_conv(extra_args: list, capture_stdout: bool = False):
     argv = [
         "il_conv.py",
         "-x", str(XML_V63R1),
-        "-r", str(RN_V63_V108),
+        "-r", str(RN_V63_V109),
     ] + extra_args
 
     if not capture_stdout:
@@ -235,7 +235,7 @@ class TestIlConvErrors(unittest.TestCase):
         with patch("sys.argv", [
             "il_conv.py",
             "-x", str(XML_V63R1),
-            "-r", "/nonexistent/readme_tricore_v6.3r1_inspector_v1.0r8.html",
+            "-r", "/nonexistent/readme_tricore_v6.3r1_inspector_v1.0r9.html",
             str(TEST_LOG),
         ]):
             with self.assertRaises(FileNotFoundError):
@@ -258,7 +258,7 @@ class TestIlConvErrors(unittest.TestCase):
 
     def test_relnotefile_unknown_compiler_version_raises(self):
         tmp_dir = tempfile.mkdtemp()
-        rn_bad = Path(tmp_dir) / "readme_tricore_v9.9r9_inspector_v1.0r8.html"
+        rn_bad = Path(tmp_dir) / "readme_tricore_v9.9r9_inspector_v1.0r9.html"
         rn_bad.write_text("<html></html>")
         try:
             with patch("sys.argv", [
@@ -277,7 +277,7 @@ class TestIlConvErrors(unittest.TestCase):
         with patch("sys.argv", [
             "il_conv.py",
             "-x", "/nonexistent/issues.xml",
-            "-r", str(RN_V63_V108),
+            "-r", str(RN_V63_V109),
             str(TEST_LOG),
         ]):
             with self.assertRaises(FileNotFoundError):
