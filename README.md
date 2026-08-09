@@ -4,7 +4,13 @@
   [![CI](https://github.com/Paul-Hi/il_conv/actions/workflows/ci.yml/badge.svg)](https://github.com/Paul-Hi/il_conv/actions/workflows/ci.yml)
 </p>
 
-# *New* Version: v3.0beta5
+# *New* Version: v3.0beta6
+- Add: Isolate Python and Nuitka tooling in project virtual environments (`.venv` for tests, `.venv-build` for Nuitka builds) via new `setup.sh` / `setup.cmd`.
+- Add: Linux Nuitka onefile build script `create_nuitka_exe.sh`.
+- Update: `run_tests.sh` / `run_tests.cmd` use the project venv instead of the global Python.
+- Doc: Extend DEV.md with the virtual environment setup and Linux build instructions.
+
+# Version: v3.0beta5
 - Update: All references and examples now use the latest TASKING Inspector release notes v1.0r9 (v6.2r2 and v6.3r1); public tests updated accordingly.
 - Fix: GitHub Releases now attach a working Linux onefile binary (il_conv-linux-x64) and the Windows onefile binary (il_conv-windows-x64.exe). Previously the Linux asset was not attached due to a naming mismatch.
 - Fix: CI and Nuitka build run on ubuntu-22.04 (Linux) and windows-latest (Windows).
