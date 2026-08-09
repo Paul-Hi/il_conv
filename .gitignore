@@ -21,6 +21,9 @@ RELEASENOTES/*Zone.Identifier
 *.zip
 AGENTS.md
 CLAUDE.md
+.opencode
+.claude
+docs/jj-agent-policy.md
 
 XML/*
 XML.priv/*
