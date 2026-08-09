@@ -130,8 +130,12 @@ In case you wanna *use* the python scripts, you have to at least install python 
 - ~~numpy~~
 - ~~datatable~~
 
+**Development setup:** run `./setup.sh` (Linux/WSL) or `setup.cmd` (Windows) once to
+create the project virtual environments (`.venv` for running the tests,
+`.venv-build` for Nuitka builds) — nothing is installed into your global Python.
+
 In case you wanna build the scripts into a onefile executabe
-- nuitka based - supported (see create_nuitka_exe.bat on windows)
+- nuitka based - supported (`create_nuitka_exe.bat` on Windows, `create_nuitka_exe.sh` on Linux)
 
 Be aware that nuitka builds depends on a bunch of addtional things to be installed in addtion (e.g. gcc compiler) on the build machine
 --> much easier is using the provided onefile binaries (Linux and Windows) from our release page

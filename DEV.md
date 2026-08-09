@@ -1,6 +1,28 @@
 # DEV.md — Developer Reference for il_conv
 
+## Setup — Virtual Environments
+
+All local tooling uses two isolated Python virtual environments; nothing is
+installed into your global Python (which may be shadowed by e.g. linuxbrew).
+
+```bash
+./setup.sh        # Linux/WSL: creates .venv (dev) and .venv-build (Nuitka)
+setup.cmd         # Windows:   same, as .venv and .venv-build Scripts\
+```
+
+| Venv | Contents | Used by |
+|---|---|---|
+| `.venv` | `requirements.txt` (incl. `coverage`) | `run_tests.sh` / `run_tests.cmd` |
+| `.venv-build` | `requirements.txt` + `nuitka ordered-set zstandard` | `create_nuitka_exe.sh` / `.bat` |
+
+Optional: `PYTHON=python3.12 ./setup.sh` (or `set PYTHON=...` on Windows)
+picks a specific base interpreter instead of the auto-detected Python ≥ 3.10.
+The C compilers (gcc/MinGW) stay system-managed and are *not* part of a venv.
+
 ## Running the Tests Locally
+
+> The test scripts use `.venv` by default and fail with a setup hint if it is
+> missing. `PYTHON` can override the interpreter.
 
 ### Linux / WSL
 
@@ -138,8 +160,20 @@ res/logo.png
 Passed via `--include-data-file=src=dest` so they are accessible at runtime
 through `resources.py` regardless of whether running from source or a bundled exe.
 
-#### Local build (Windows)
+#### Local build
+
+The local build scripts use the `.venv-build` environment (see Setup above) and
+check that the required system tools are present. They do **not** install
+anything into your global Python.
+
+**Windows:**
 
 ```bat
 create_nuitka_exe.bat
+```
+
+**Linux:**
+
+```bash
+./create_nuitka_exe.sh      # requires gcc + patchelf (sudo apt install gcc patchelf)
 ```

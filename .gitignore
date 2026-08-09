@@ -1,4 +1,6 @@
 __pycache__
+.venv
+.venv-build
 .coverage
 build
 dist
@@ -16,6 +18,9 @@ RELEASENOTES/*Zone.Identifier
 !RELEASENOTES/*.html
 *.bak
 *.db
+*.zip
+AGENTS.md
+CLAUDE.md
 
 XML/*
 XML.priv/*
